@@ -1,0 +1,160 @@
+---
+alwaysApply: false
+---
+
+### 목적
+- **의도**: 팀 내 일관된 Android Kotlin 개발 방식 확립. 파일 배치, 아키텍처, 코드 스타일, 테스트, 협업 규칙을 간결하게 정의.
+- **적용 범위**: Android Native Kotlin 앱, MVVM 아키텍처, Material Design 3 기반 UI.
+
+### 아키텍처 요약
+- **플랫폼**: Android Native + Kotlin
+- **아키텍처**: MVVM (Model-View-ViewModel) + Repository Pattern
+- **DI**: Hilt (Dependency Injection)
+- **네비게이션**: Navigation Component
+- **UI**: Jetpack Compose + Material Design 3
+
+### 디렉토리 규칙
+- **`app/src/main/java/com/khigh/seniormap/`**: 메인 소스 디렉토리
+  - **`ui/`**: UI 관련 컴포넌트 (Activity, Fragment, Composable)
+    - `activities/`: Activity 클래스들
+    - `fragments/`: Fragment 클래스들  
+    - `composables/`: Jetpack Compose UI 컴포넌트
+    - `theme/`: 테마, 색상, 타이포그래피 정의
+  - **`viewmodel/`**: ViewModel 클래스들
+  - **`model/`**: 데이터 모델 클래스들
+    - `entity/`: Room Entity 클래스들
+    - `dto/`: 네트워크 DTO 클래스들
+    - `mapper/`: 데이터 변환 Mapper들
+  - **`repository/`**: Repository 인터페이스 및 구현체
+  - **`network/`**: 네트워크 관련 클래스들
+    - `api/`: Retrofit API 인터페이스
+    - `interceptor/`: HTTP 인터셉터들
+  - **`database/`**: Room 데이터베이스 관련
+    - `dao/`: Data Access Object 인터페이스들
+    - `database/`: Room Database 클래스
+  - **`di/`**: Hilt 의존성 주입 모듈들
+  - **`util/`**: 유틸리티 클래스들
+  - **`constants/`**: 상수 정의
+- **`app/src/main/res/`**: 리소스 디렉토리
+  - `layout/`: XML 레이아웃 파일들
+  - `values/`: 문자열, 색상, 스타일 등
+  - `drawable/`: 이미지 및 벡터 드로어블
+  - `mipmap/`: 앱 아이콘
+- **`app/src/test/`**: 단위 테스트
+- **`app/src/androidTest/`**: 계측 테스트
+
+### 네비게이션 규칙 (Navigation Component)
+- **네비게이션 그래프**: `res/navigation/nav_graph.xml`에 정의
+- **Fragment 간 이동**: Safe Args 사용하여 타입 안전성 보장
+- **Deep Link**: 필요시 네비게이션 그래프에서 정의
+- **백스택 관리**: Navigation Component가 자동 처리
+
+### 코드 스타일/패턴
+- **언어**: Kotlin 100% 사용, Java 사용 금지
+- **클래스 구조**: 
+  - Activity/Fragment는 UI 로직만 담당
+  - ViewModel에서 비즈니스 로직 처리
+  - Repository를 통한 데이터 접근
+- **네이밍**: 
+  - 클래스: `PascalCase` (예: `MainActivity`, `UserRepository`)
+  - 함수/변수: `camelCase` (예: `getUserData`, `isLoading`)
+  - 상수: `UPPER_SNAKE_CASE` (예: `API_BASE_URL`)
+  - 패키지: `lowercase` (예: `com.khigh.seniormap.ui.activities`)
+- **Null Safety**: Kotlin의 null safety 활용, `!!` 연산자 사용 최소화
+- **확장 함수**: 코드 재사용성을 위해 적극 활용
+- **데이터 클래스**: 불변성을 위해 `data class` 사용
+
+### 상태/데이터 관리
+- **ViewModel**: UI 관련 데이터 보유, 생명주기 인식
+- **LiveData/StateFlow**: UI 상태 관찰을 위한 옵저버 패턴
+- **Repository**: 단일 데이터 소스, 네트워크와 로컬 DB 조합
+- **Room Database**: 로컬 데이터 영속성
+- **SharedPreferences/DataStore**: 간단한 설정값 저장
+- **비동기 처리**: Coroutines + Flow 사용
+
+### UI/디자인
+- **Jetpack Compose**: 새로운 UI는 Compose로 구현
+- **Material Design 3**: 최신 Material Design 가이드라인 준수
+- **테마**: 다크/라이트 모드 지원
+- **접근성**: `contentDescription`, 적절한 터치 타겟 크기 준수
+- **반응형**: 다양한 화면 크기 대응
+
+### 의존성 주입 (Hilt)
+- **@HiltAndroidApp**: Application 클래스에 적용
+- **@AndroidEntryPoint**: Activity, Fragment, ViewModel에 적용
+- **@Module**: 의존성 제공 모듈 정의
+- **@Provides/@Binds**: 의존성 제공 메서드
+- **Scopes**: `@Singleton`, `@ActivityScoped` 등 적절한 스코프 사용
+
+### 네트워크 통신
+- **Retrofit**: REST API 통신
+- **OkHttp**: HTTP 클라이언트, 인터셉터 활용
+- **Moshi/Gson**: JSON 직렬화/역직렬화
+- **에러 핸들링**: 네트워크 오류, HTTP 오류 적절히 처리
+- **오프라인 지원**: Room과 연계한 캐싱 전략
+
+### 테스트
+- **단위 테스트**: JUnit5, MockK 사용
+- **계측 테스트**: Espresso, Compose Testing
+- **테스트 대상**: ViewModel, Repository, Mapper, Util 클래스
+- **테스트 위치**: `src/test/` (단위), `src/androidTest/` (계측)
+- **테스트 네이밍**: `should_ExpectedBehavior_When_StateUnderTest`
+
+### 보안
+- **API 키**: `BuildConfig`나 `local.properties`에서 관리
+- **ProGuard/R8**: 릴리즈 빌드 시 코드 난독화
+- **Network Security**: HTTPS 통신 강제, Certificate Pinning 고려
+- **권한**: 필요 최소한의 권한만 요청, 런타임 권한 처리
+
+### 성능/최적화
+- **이미지**: Glide/Coil 사용, 적절한 캐싱
+- **메모리**: 메모리 누수 방지, WeakReference 활용
+- **배터리**: 백그라운드 작업 최소화, WorkManager 활용
+- **APK 크기**: 불필요한 리소스 제거, Bundle 사용
+
+### 빌드 시스템 (Gradle)
+- **Kotlin DSL**: `build.gradle.kts` 사용
+- **Version Catalogs**: `gradle/libs.versions.toml`에서 의존성 버전 관리
+- **Build Variants**: debug, release 빌드 타입
+- **Signing**: 릴리즈 빌드 서명 설정
+
+### 린트/코드 품질
+- **Android Lint**: 정적 분석 도구 활용
+- **Detekt**: Kotlin 코드 스타일 검사
+- **KtLint**: 코드 포매팅 일관성
+- **SonarQube**: 코드 품질 측정 (선택사항)
+
+### Git/PR 규칙
+- **브랜치**: `feature/<scope>-<short>`, `fix/<scope>-<short>`
+- **커밋**: Conventional Commits(`feat:`, `fix:`, `refactor:`, `chore:` 등)
+- **PR 크기**: 300줄 내외 지향, 설명에 의도/설계/테스트 방법 명시
+- **리뷰**: 최소 1인 승인, 셀프 머지 금지(긴급 핫픽스 제외)
+
+### 파일명/네이밍 세부 규칙
+- **Activity**: `*Activity.kt` (예: `MainActivity.kt`)
+- **Fragment**: `*Fragment.kt` (예: `HomeFragment.kt`)
+- **ViewModel**: `*ViewModel.kt` (예: `HomeViewModel.kt`)
+- **Repository**: `*Repository.kt`, `*RepositoryImpl.kt`
+- **Entity**: `*Entity.kt` (예: `UserEntity.kt`)
+- **DTO**: `*Dto.kt` (예: `UserDto.kt`)
+- **Composable**: `*Composable.kt` 또는 기능별 파일명
+
+### 의존성 관리
+- **최신 버전**: 안정적인 최신 버전 사용
+- **호환성**: minSdk, targetSdk, compileSdk 적절히 설정
+- **라이브러리 선택**: 검증된 라이브러리 우선, 과도한 의존성 지양
+
+### 작업 방식
+- **이슈 우선**: 이슈/태스크 생성 → 브랜치 → PR → 리뷰 → 머지
+- **문서화**: 복잡한 로직은 KDoc 주석 추가
+- **점진적 개선**: 레거시 코드는 기능 변경 시 현대적 패턴으로 리팩터링
+
+### 프로젝트 특화 규칙
+- **패키지명**: `com.khigh.seniormap`로 통일
+- **앱 아이콘**: `mipmap-*` 디렉토리에 적절한 해상도별 아이콘 배치
+- **리소스 네이밍**: `snake_case` 사용 (예: `activity_main.xml`, `color_primary`)
+- **문자열 리소스**: 하드코딩 금지, `strings.xml`에서 관리
+description:
+globs:
+alwaysApply: false
+---
