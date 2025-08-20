@@ -1,239 +1,286 @@
 package com.khigh.seniormap.repository
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.khigh.seniormap.model.dto.*
 import com.khigh.seniormap.model.entity.UserEntity
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.OAuthProvider
-import io.github.jan.supabase.auth.providers.Google
-import io.github.jan.supabase.auth.providers.Kakao
-import io.github.jan.supabase.auth.user.UserInfo
-import com.khigh.seniormap.network.SupabaseModule
-import io.github.jan.supabase.auth.handleDeeplinks
-import kotlinx.coroutines.flow.Flow
+import com.khigh.seniormap.network.api.KHighApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Supabase 기반 인증 Repository 구현체
+ * K-HIGH 서버 API Repository 구현체
+ * 
+ * K-HIGH 서버와의 통신을 담당하며, Supabase 토큰을 사용하여
+ * 서버 세션을 동기화하고 사용자 정보를 관리합니다.
  */
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val supabaseClient: SupabaseClient,
+    private val kHighApi: KHighApi,
     private val dataStore: DataStore<Preferences>
 ) : AuthRepository {
     
     companion object {
-        private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
-        private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
-        private val USER_ID_KEY = stringPreferencesKey("user_id")
-        private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
-        private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val KHIGH_TOKEN_KEY = stringPreferencesKey("khigh_server_token")
+        private const val TAG = "AuthRepositoryImpl"
     }
     
-    override suspend fun loginWithOAuth(provider: OAuthProvider): Result<Unit> = runCatching {
-        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] loginWithOAuth: $provider")
-        supabaseClient.auth.signInWith(provider)
-    }
-
-    override suspend fun handleCallback(intent: Intent) {
-        supabaseClient.handleDeeplinks(intent)
-    }
+    // ==================== Auth API ====================
     
-    override suspend fun getCurrentUser(): Result<UserInfo?> {
+    override suspend fun login(accessToken: String): Result<String> {
         return try {
-            val user = supabaseClient.auth.currentUserOrNull()
-            // val userDto = user?.toUserDto()
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun refreshSession(): Result<UserInfo> {
-        return try {
-            val session = supabaseClient.auth.refreshCurrentSession()
-            val user = supabaseClient.auth.currentUserOrNull() 
+            Log.d(TAG, "login: Attempting to login with Supabase token")
             
-            // val userDto = user?.toUserDto()
+            val request = KHighLoginRequest(accessToken = accessToken)
+            val response = kHighApi.login(request)
             
-            if (user != null) {
-                saveUserSessionLocally(user)
-                Result.success(user)
+            if (response.isSuccessful) {
+                val serverToken = response.body()
+                if (!serverToken.isNullOrEmpty()) {
+                    // K-HIGH 서버 토큰 저장
+                    saveKHighToken(serverToken)
+                    Log.d(TAG, "login: Login successful, token saved")
+                    Result.success(serverToken)
+                } else {
+                    Log.e(TAG, "login: Empty token received")
+                    Result.failure(Exception("서버에서 유효하지 않은 토큰을 반환했습니다"))
+                }
             } else {
-                Result.failure(Exception("세션 갱신 실패"))
+                Log.e(TAG, "login: Login failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("K-HIGH 서버 로그인 실패: ${response.message()}"))
             }
         } catch (e: Exception) {
+            Log.e(TAG, "login: Exception occurred", e)
             Result.failure(e)
         }
     }
     
     override suspend fun logout(): Result<Unit> {
         return try {
-            supabaseClient.auth.signOut()
-            clearTokens()
-            clearLocalUser()
-            Result.success(Unit)
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.w(TAG, "logout: No token found, skipping server logout")
+                clearKHighToken()
+                return Result.success(Unit)
+            }
+            
+            Log.d(TAG, "logout: Attempting to logout from K-HIGH server")
+            
+            val response = kHighApi.logout("Bearer $token")
+            
+            if (response.isSuccessful) {
+                clearKHighToken()
+                Log.d(TAG, "logout: Logout successful")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "logout: Logout failed - ${response.code()}: ${response.message()}")
+                // 실패해도 로컬 토큰은 삭제
+                clearKHighToken()
+                Result.failure(Exception("K-HIGH 서버 로그아웃 실패: ${response.message()}"))
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "logout: Exception occurred", e)
+            // 예외 발생해도 로컬 토큰은 삭제
+            clearKHighToken()
             Result.failure(e)
         }
     }
     
-//    override suspend fun updateProfile(request: UserProfileUpdateRequest): Result<UserInfo> {
-//        return try {
-//            val updatedUser = supabaseClient.auth.updateUser {
-//                data {
-//                    put("user_name", request.userName)
-//                    put("phone", request.phone)
-//                    put("is_helper", request.isHelper)
-//                }
-//
-//            }
-//
-//            // val userDto = updatedUser.toUserDto()
-//            saveUserSessionLocally(updatedUser)
-//
-//            Result.success(updatedUser)
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
+    // ==================== User API ====================
+    
+    override suspend fun getCurrentUser(): Result<KHighUserResponse> {
+        return try {
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.e(TAG, "getCurrentUser: No K-HIGH token found")
+                return Result.failure(Exception("K-HIGH 서버 토큰이 없습니다"))
+            }
+            
+            Log.d(TAG, "getCurrentUser: Fetching user info from K-HIGH server")
+            
+            val response = kHighApi.getCurrentUser("Bearer $token")
+            
+            if (response.isSuccessful) {
+                val userResponse = response.body()
+                if (userResponse != null) {
+                    Log.d(TAG, "getCurrentUser: User info fetched successfully")
+                    Result.success(userResponse)
+                } else {
+                    Log.e(TAG, "getCurrentUser: Empty response body")
+                    Result.failure(Exception("서버에서 사용자 정보를 받지 못했습니다"))
+                }
+            } else {
+                Log.e(TAG, "getCurrentUserFromServer: Failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("사용자 정보 조회 실패: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getCurrentUserFromServer: Exception occurred", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun updateUserProfile(request: KHighUserProfileUpdateRequest): Result<Unit> {
+        return try {
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.e(TAG, "updateUserProfile: No K-HIGH token found")
+                return Result.failure(Exception("K-HIGH 서버 토큰이 없습니다"))
+            }
+            
+            Log.d(TAG, "updateUserProfile: Updating user profile")
+            
+            val response = kHighApi.updateUserProfile("Bearer $token", request)
+            
+            if (response.isSuccessful) {
+                Log.d(TAG, "updateUserProfile: Profile updated successfully")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "updateUserProfile: Failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("프로필 업데이트 실패: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateUserProfile: Exception occurred", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun updateFcmToken(fcmToken: String): Result<Unit> {
+        return try {
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.e(TAG, "updateFcmToken: No K-HIGH token found")
+                return Result.failure(Exception("K-HIGH 서버 토큰이 없습니다"))
+            }
+            
+            Log.d(TAG, "updateFcmToken: Updating FCM token")
+            
+            val request = KHighFcmTokenRequest(fcmToken = fcmToken)
+            val response = kHighApi.updateFcmToken("Bearer $token", request)
+            
+            if (response.isSuccessful) {
+                Log.d(TAG, "updateFcmToken: FCM token updated successfully")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "updateFcmToken: Failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("FCM 토큰 업데이트 실패: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateFcmToken: Exception occurred", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun updateAlertFlag(isAlert: Boolean): Result<Unit> {
+        return try {
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.e(TAG, "updateAlertFlag: No K-HIGH token found")
+                return Result.failure(Exception("K-HIGH 서버 토큰이 없습니다"))
+            }
+            
+            Log.d(TAG, "updateAlertFlag: Updating alert flag to $isAlert")
+            
+            val request = KHighAlertFlagRequest(isAlert = isAlert)
+            val response = kHighApi.updateAlertFlag("Bearer $token", request)
+            
+            if (response.isSuccessful) {
+                Log.d(TAG, "updateAlertFlag: Alert flag updated successfully")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "updateAlertFlag: Failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("알림 설정 업데이트 실패: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateAlertFlag: Exception occurred", e)
+            Result.failure(e)
+        }
+    }
     
     override suspend fun deleteUser(): Result<Unit> {
         return try {
-            // Supabase에서는 관리자 권한이 필요하므로 클라이언트에서 직접 삭제 불가
-            // 대신 서버 API를 통해 삭제 요청을 보내야 함
-            logout()
-            Result.success(Unit)
+            val token = getKHighToken()
+            if (token.isNullOrEmpty()) {
+                Log.e(TAG, "deleteUser: No K-HIGH token found")
+                return Result.failure(Exception("K-HIGH 서버 토큰이 없습니다"))
+            }
+            
+            Log.d(TAG, "deleteUser: Deleting user account")
+            
+            val response = kHighApi.deleteUser("Bearer $token")
+            
+            if (response.isSuccessful) {
+                clearKHighToken()
+                Log.d(TAG, "deleteUser: User account deleted successfully")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "deleteUser: Failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("계정 삭제 실패: ${response.message()}"))
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "deleteUser: Exception occurred", e)
             Result.failure(e)
         }
     }
     
-    /**
-     * Supabase 사용자 세션을 로컬에 저장
-     */
-    private suspend fun saveUserSessionLocally(user: UserInfo) {
-        val session = supabaseClient.auth.currentSessionOrNull()
-        session?.let {
-            saveAccessToken(it.accessToken)
-            saveRefreshToken(it.refreshToken ?: "")
-        }
-        
-        dataStore.edit { preferences ->
-            preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email ?: ""
-            preferences[USER_NAME_KEY] = user.userMetadata?.get("name")?.toString() ?: "사용자"
-        }
-    }
+    // ==================== 통합 기능 ====================
     
-    override suspend fun saveUserLocally(user: UserEntity) {
-        dataStore.edit { preferences ->
-            preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email
-            preferences[USER_NAME_KEY] = user.userName
-        }
-    }
-    
-    override suspend fun getLocalUser(): UserEntity? {
-        val preferences = dataStore.data.first()
-        val userId = preferences[USER_ID_KEY]
-        val userEmail = preferences[USER_EMAIL_KEY]
-        val userName = preferences[USER_NAME_KEY]
-        
-        return if (userId != null && userEmail != null && userName != null) {
-            UserEntity(
-                id = userId,
-                email = userEmail,
-                userName = userName,
-                phone = null,
-                isCaregiver = false,
-                isHelper = false,
-                fcmToken = null,
-                isAlert = false,
-                accessToken = getAccessToken(),
-                refreshToken = getRefreshToken()
-            )
-        } else {
-            null
-        }
-    }
-    
-    override suspend fun clearLocalUser() {
-        dataStore.edit { preferences ->
-            preferences.remove(USER_ID_KEY)
-            preferences.remove(USER_EMAIL_KEY)
-            preferences.remove(USER_NAME_KEY)
-        }
-    }
-    
-    override suspend fun saveAccessToken(token: String) {
-        dataStore.edit { preferences ->
-            preferences[ACCESS_TOKEN_KEY] = token
-        }
-    }
-    
-    override suspend fun getAccessToken(): String? {
-        return dataStore.data.first()[ACCESS_TOKEN_KEY]
-    }
-    
-    override suspend fun saveRefreshToken(token: String) {
-        dataStore.edit { preferences ->
-            preferences[REFRESH_TOKEN_KEY] = token
-        }
-    }
-    
-    override suspend fun getRefreshToken(): String? {
-        return dataStore.data.first()[REFRESH_TOKEN_KEY]
-    }
-    
-    override suspend fun clearTokens() {
-        dataStore.edit { preferences ->
-            preferences.remove(ACCESS_TOKEN_KEY)
-            preferences.remove(REFRESH_TOKEN_KEY)
-        }
-    }
-    
-    override fun observeAuthState(): Flow<SessionStatus> {
-        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] observeAuthState")
-        return supabaseClient.auth.sessionStatus
-    }
-
-    override fun getCurrentSessionStatus(): SessionStatus {
-        return supabaseClient.auth.sessionStatus.value
-    }
-    
-    override fun observeCurrentUser(): Flow<UserEntity?> {
-        return dataStore.data.map { preferences ->
-            val userId = preferences[USER_ID_KEY]
-            val userEmail = preferences[USER_EMAIL_KEY]
-            val userName = preferences[USER_NAME_KEY]
+    override suspend fun syncWithServer(
+        supabaseAccessToken: String,
+        userId: String,
+        email: String
+    ): Result<UserEntity> {
+        return try {
+            Log.d(TAG, "syncWithServer: Starting sync process")
             
-            if (userId != null && userEmail != null && userName != null) {
-                UserEntity(
-                    id = userId,
-                    email = userEmail,
-                    userName = userName,
-                    phone = null,
-                    isCaregiver = false,
-                    isHelper = false,
-                    fcmToken = null,
-                    isAlert = false,
-                    accessToken = preferences[ACCESS_TOKEN_KEY],
-                    refreshToken = preferences[REFRESH_TOKEN_KEY]
-                )
-            } else {
-                null
+            // 1. K-HIGH 서버에 로그인
+            val loginResult = login(supabaseAccessToken)
+            if (loginResult.isFailure) {
+                Log.e(TAG, "syncWithServer: K-HIGH login failed")
+                return Result.failure(loginResult.exceptionOrNull() ?: Exception("K-HIGH 로그인 실패"))
+            }
+            
+            // 2. 서버에서 사용자 정보 조회
+            val userInfoResult = getCurrentUser()
+            if (userInfoResult.isFailure) {
+                Log.e(TAG, "syncWithServer: Failed to get user info from K-HIGH")
+                return Result.failure(userInfoResult.exceptionOrNull() ?: Exception("사용자 정보 조회 실패"))
+            }
+            
+            // 3. 로컬 UserEntity 생성
+            val kHighUser = userInfoResult.getOrNull()!!
+            val userEntity = kHighUser.toUserEntity(userId, email)
+            
+            Log.d(TAG, "syncWithServer: Sync completed successfully")
+            Result.success(userEntity)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "syncWithServer: Exception occurred", e)
+            Result.failure(e)
+        }
+    }
+    
+    // ==================== Private Helper Methods ====================
+    
+    private suspend fun saveKHighToken(token: String) {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[KHIGH_TOKEN_KEY] = token
+            }
+        }
+    }
+    
+    private suspend fun getKHighToken(): String? {
+        val preferences = dataStore.data.first()
+        return preferences[KHIGH_TOKEN_KEY]
+    }
+    
+    private suspend fun clearKHighToken() {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                remove(KHIGH_TOKEN_KEY)
             }
         }
     }

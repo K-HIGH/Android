@@ -1,8 +1,8 @@
 package com.khigh.seniormap.network
 
 import com.khigh.seniormap.BuildConfig
-import com.khigh.seniormap.repository.AuthRepository
-import com.khigh.seniormap.repository.AuthRepositoryImpl
+import com.khigh.seniormap.repository.SupabaseAuthRepository
+import com.khigh.seniormap.repository.SupabaseAuthRepositoryImpl
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.auth

@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
  * Supabase OAuth 로그인 요청 DTO
  */
 @Serializable
-data class OAuthLoginRequest(
+data class SupabaseOAuthLoginRequest(
     @SerialName("provider")
     val provider: String, // "kakao" | "google"
     @SerialName("redirect_to")
@@ -16,21 +16,10 @@ data class OAuthLoginRequest(
 )
 
 /**
- * Supabase 이메일/패스워드 로그인 요청 DTO
- */
-@Serializable
-data class EmailLoginRequest(
-    @SerialName("email")
-    val email: String,
-    @SerialName("password")
-    val password: String
-)
-
-/**
  * Supabase 로그인 응답 DTO
  */
 @Serializable
-data class LoginResponse(
+data class SupabaseLoginResponse(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("refresh_token")
@@ -115,7 +104,7 @@ data class UserDto(
  * 유저 로그인 요청 DTO
  */
 @Serializable
-data class UserLoginRequest(
+data class SupabaseUserLoginRequest(
     @SerialName("access_token")
     val accessToken: String,
 )
@@ -124,13 +113,13 @@ data class UserLoginRequest(
  * 토큰 갱신 요청 DTO
  */
 @Serializable
-data class RefreshTokenRequest(
+data class SupabaseRefreshTokenRequest(
     @SerialName("refresh_token")
     val refreshToken: String
 ) {
     companion object {
-        fun from(refreshToken: String): RefreshTokenRequest {
-            return RefreshTokenRequest(refreshToken)
+        fun from(refreshToken: String): SupabaseRefreshTokenRequest {
+            return SupabaseRefreshTokenRequest(refreshToken)
         }
     }
 }
@@ -139,7 +128,7 @@ data class RefreshTokenRequest(
  * 토큰 갱신 응답 DTO
  */
 @Serializable
-data class RefreshTokenResponse(
+data class SupabaseRefreshTokenResponse(
     @SerialName("access_token")
     val accessToken: String,
 )
@@ -147,7 +136,7 @@ data class RefreshTokenResponse(
  * 프로필 업데이트 요청 DTO (앱 방식)
  */
 @Serializable
-data class UserProfileUpdateRequest(
+data class SupabaseUserProfileUpdateRequest(
     @SerialName("user_name")
     val userName: String,
     @SerialName("phone")
@@ -155,12 +144,3 @@ data class UserProfileUpdateRequest(
     @SerialName("is_helper")
     val isHelper: Boolean = false,
 )
-
-/**
- * Supabase 사용자를 앱 사용자로 변환하는 확장 함수
- */
-fun LoginResponse.toUserLoginRequest(): UserLoginRequest {
-    return UserLoginRequest(
-        accessToken = this.accessToken,
-    )
-} 

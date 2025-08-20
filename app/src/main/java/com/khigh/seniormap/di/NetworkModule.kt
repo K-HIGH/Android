@@ -2,8 +2,8 @@ package com.khigh.seniormap.di
 
 import com.khigh.seniormap.BuildConfig
 import com.khigh.seniormap.constants.AppConstants
-import com.khigh.seniormap.network.TokenProvider
-import com.khigh.seniormap.network.api.AuthApi
+import com.khigh.seniormap.network.api.SupabaseAuthApi
+import com.khigh.seniormap.network.api.KHighApi
 import com.khigh.seniormap.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -16,59 +16,54 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
 /**
  * 네트워크 관련 의존성 주입 모듈
  * 
- * Retrofit, OkHttp, API 인터페이스 등 네트워크 통신에 필요한
- * 의존성들을 제공합니다.
+ * Supabase API와 K-HIGH 서버 API를 위한
+ * Retrofit, OkHttpClient 등의 네트워크 구성요소를 제공합니다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    /**
-     * kotlinx.serialization Json 인스턴스 제공
-     */
+    
+    // ==================== Qualifiers ====================
+    
+    @Qualifier
+    @Retention(AnnotationRetention.BINARY)
+    annotation class SupabaseRetrofit
+    
+    @Qualifier
+    @Retention(AnnotationRetention.BINARY)
+    annotation class KHighRetrofit
+    
+    // ==================== Common Dependencies ====================
+    
     @Provides
     @Singleton
     fun provideJson(): Json {
         return Json {
-            ignoreUnknownKeys = true // 알 수 없는 키 무시
-            coerceInputValues = true // null이나 잘못된 값을 기본값으로 변환
-            encodeDefaults = true // 기본값도 인코딩
-            isLenient = true // 유연한 파싱
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+            encodeDefaults = true
+            isLenient = true
         }
     }
-
-    /**
-     * HTTP 로깅 인터셉터 제공
-     */
+    
     @Provides
     @Singleton
-    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+    fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG_MODE) {
+            level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
             } else {
                 HttpLoggingInterceptor.Level.NONE
             }
         }
     }
-
-    /**
-     * 인증 인터셉터 제공
-     */
-    @Provides
-    @Singleton
-    fun provideAuthInterceptor(tokenProvider: TokenProvider): AuthInterceptor {
-        return AuthInterceptor(tokenProvider)
-    }
-
-    /**
-     * OkHttpClient 제공
-     */
+    
     @Provides
     @Singleton
     fun provideOkHttpClient(
@@ -83,31 +78,66 @@ object NetworkModule {
             .writeTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     }
-
-    /**
-     * Retrofit 인스턴스 제공
-     */
+    
+    // ==================== Supabase API Dependencies ====================
+    
     @Provides
     @Singleton
-    fun provideRetrofit(
+    @SupabaseRetrofit
+    fun provideSupabaseRetrofit(
         okHttpClient: OkHttpClient,
         json: Json
     ): Retrofit {
         val contentType = "application/json".toMediaType()
-        
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
     }
-
-    /**
-     * 인증 API 인터페이스 제공
-     */
+    
     @Provides
     @Singleton
-    fun provideAuthApi(retrofit: Retrofit): AuthApi {
-        return retrofit.create(AuthApi::class.java)
+    fun provideSupabaseAuthApi(@SupabaseRetrofit retrofit: Retrofit): SupabaseAuthApi {
+        return retrofit.create(SupabaseAuthApi::class.java)
+    }
+    
+    // ==================== K-HIGH API Dependencies ====================
+    
+    @Provides
+    @Singleton
+    @KHighRetrofit
+    fun provideKHighRetrofit(
+        json: Json
+    ): Retrofit {
+        val contentType = "application/json".toMediaType()
+        
+        // K-HIGH API용 별도 OkHttpClient (AuthInterceptor 제외)
+        val kHighClient = OkHttpClient.Builder()
+            .addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = if (BuildConfig.DEBUG) {
+                        HttpLoggingInterceptor.Level.BODY
+                    } else {
+                        HttpLoggingInterceptor.Level.NONE
+                    }
+                }
+            )
+            .connectTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
+        
+        return Retrofit.Builder()
+            .baseUrl("http://121.157.24.40:63001/") // K-HIGH 서버 URL
+            .client(kHighClient)
+            .addConverterFactory(json.asConverterFactory(contentType))
+            .build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideKHighApi(@KHighRetrofit retrofit: Retrofit): KHighApi {
+        return retrofit.create(KHighApi::class.java)
     }
 } 

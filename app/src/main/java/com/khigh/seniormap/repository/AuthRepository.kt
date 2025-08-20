@@ -1,106 +1,63 @@
 package com.khigh.seniormap.repository
 
-import android.content.Intent
-import android.net.Uri
 import com.khigh.seniormap.model.dto.*
 import com.khigh.seniormap.model.entity.UserEntity
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.user.UserInfo
-import io.github.jan.supabase.auth.providers.OAuthProvider
-import kotlinx.coroutines.flow.Flow
 
 /**
- * 인증 관련 Repository 인터페이스 (Supabase 기반)
+ * K-HIGH 서버 API Repository 인터페이스
+ * 
+ * Supabase OAuth 토큰을 사용하여 K-HIGH 서버와 통신하는
+ * 비즈니스 로직을 정의합니다.
  */
 interface AuthRepository {
     
-    /**
-     * Supabase OAuth 로그인 (카카오, 구글)
-     */
-    suspend fun loginWithOAuth(provider: OAuthProvider): Result<Unit>
+    // ==================== Auth API ====================
     
     /**
-     * OAuth 딥링크 처리
+     * K-HIGH 서버에 로그인
+     * Supabase access_token을 전달하여 서버 세션 동기화
      */
-    suspend fun handleCallback(intent: Intent)
-
-    /**
-     * 현재 사용자 정보 조회
-     */
-    suspend fun getCurrentUser(): Result<UserInfo?>
+    suspend fun login(accessToken: String): Result<String>
     
     /**
-     * 토큰 갱신
-     */
-    suspend fun refreshSession(): Result<UserInfo>
-    
-    /**
-     * 로그아웃
+     * K-HIGH 서버에서 로그아웃
      */
     suspend fun logout(): Result<Unit>
     
-    /**
-     * 사용자 프로필 업데이트
-     */
-//    suspend fun updateProfile(request: UserProfileUpdateRequest): Result<UserInfo>
+    // ==================== User API ====================
     
     /**
-     * 계정 삭제
+     * K-HIGH 서버에서 현재 사용자 정보 조회
+     */
+    suspend fun getCurrentUser(): Result<KHighUserResponse>
+    
+    /**
+     * K-HIGH 서버에 사용자 프로필 업데이트
+     */
+    suspend fun updateUserProfile(request: KHighUserProfileUpdateRequest): Result<Unit>
+    
+    /**
+     * K-HIGH 서버에 FCM 토큰 업데이트
+     */
+    suspend fun updateFcmToken(fcmToken: String): Result<Unit>
+    
+    /**
+     * K-HIGH 서버에 알림 설정 업데이트
+     */
+    suspend fun updateAlertFlag(isAlert: Boolean): Result<Unit>
+    
+    /**
+     * K-HIGH 서버에서 사용자 계정 삭제
      */
     suspend fun deleteUser(): Result<Unit>
     
-    /**
-     * 로컬 사용자 정보 저장
-     */
-    suspend fun saveUserLocally(user: UserEntity)
+    // ==================== 통합 기능 ====================
     
     /**
-     * 로컬 사용자 정보 조회
+     * OAuth 로그인 후 K-HIGH 서버 동기화
+     * 1. K-HIGH 서버에 로그인
+     * 2. 서버에서 사용자 정보 조회
+     * 3. 로컬 UserEntity 업데이트
      */
-    suspend fun getLocalUser(): UserEntity?
-    
-    /**
-     * 로컬 사용자 정보 삭제
-     */
-    suspend fun clearLocalUser()
-    
-    /**
-     * 액세스 토큰 저장
-     */
-    suspend fun saveAccessToken(token: String)
-    
-    /**
-     * 액세스 토큰 조회
-     */
-    suspend fun getAccessToken(): String?
-    
-    /**
-     * 리프레시 토큰 저장
-     */
-    suspend fun saveRefreshToken(token: String)
-    
-    /**
-     * 리프레시 토큰 조회
-     */
-    suspend fun getRefreshToken(): String?
-    
-    /**
-     * 모든 토큰 삭제
-     */
-    suspend fun clearTokens()
-
-    /**
-     * 로그인 상태 관찰
-     */
-    fun observeAuthState(): Flow<SessionStatus>
-    
-    /**
-     * 현재 세션 상태 조회
-     */
-    fun getCurrentSessionStatus(): SessionStatus
-
-    /**
-     * 현재 사용자 정보 관찰
-     */
-    fun observeCurrentUser(): Flow<UserEntity?>
+    suspend fun syncWithServer(supabaseAccessToken: String, userId: String, email: String): Result<UserEntity>
 } 
