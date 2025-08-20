@@ -1,0 +1,7 @@
+---
+description: This rule is applied only when the user mentions not to modify the legacy code
+alwaysApply: false
+---
+
+**이 룰셋이 적용된 상황에서는 유저가 지시한 영역 이외에 다른 영역의 코드 변경을 금지함.**
+**룰셋이 적용된 상황에서 에이전트는 빌드 에러가 발생하더라도 기존 코드를 변경할 수 없음.**
