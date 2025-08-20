@@ -1,137 +1,146 @@
 package com.khigh.seniormap.model.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * 검색 상태 enum
  */
+@Serializable
 enum class SearchStatus {
-    @SerializedName("idle")
+    @SerialName("idle")
     IDLE,
-    @SerializedName("searching")
+    @SerialName("searching")
     SEARCHING,
-    @SerializedName("success")
+    @SerialName("success")
     SUCCESS,
-    @SerializedName("error")
+    @SerialName("error")
     ERROR
 }
 
 /**
  * 검색 결과 DTO
  */
+@Serializable
 data class SearchResultDto(
-    @SerializedName("location")
+    @SerialName("location")
     val location: String,
-    @SerializedName("lat")
+    @SerialName("lat")
     val lat: Double,
-    @SerializedName("lng")
+    @SerialName("lng")
     val lng: Double,
-    @SerializedName("address")
+    @SerialName("address")
     val address: String?,
-    @SerializedName("road_address")
+    @SerialName("road_address")
     val roadAddress: String?,
-    @SerializedName("place_type")
+    @SerialName("place_type")
     val placeType: String?
 )
 
 /**
  * 검색 제안 DTO
  */
+@Serializable
 data class SearchSuggestionDto(
-    @SerializedName("text")
+    @SerialName("text")
     val text: String,
-    @SerializedName("type")
+    @SerialName("type")
     val type: String // "place" | "keyword" | "category"
 )
 
 /**
  * 장소 정보 DTO
  */
+@Serializable
 data class PlaceInfoDto(
-    @SerializedName("name")
+    @SerialName("name")
     val name: String,
-    @SerializedName("category")
+    @SerialName("category")
     val category: String,
-    @SerializedName("rating")
+    @SerialName("rating")
     val rating: Float,
-    @SerializedName("address")
+    @SerialName("address")
     val address: String,
-    @SerializedName("road_address")
+    @SerialName("road_address")
     val roadAddress: String?,
-    @SerializedName("phone")
+    @SerialName("phone")
     val phone: String,
-    @SerializedName("hours")
+    @SerialName("hours")
     val hours: String,
-    @SerializedName("description")
+    @SerialName("description")
     val description: String,
-    @SerializedName("coordinates")
+    @SerialName("coordinates")
     val coordinates: CoordinatesDto,
-    @SerializedName("website")
+    @SerialName("website")
     val website: String?,
-    @SerializedName("images")
+    @SerialName("images")
     val images: List<String>?,
-    @SerializedName("additional_info")
-    val additionalInfo: Map<String, Any>?
+    @SerialName("additional_info")
+    val additionalInfo: Map<String, kotlinx.serialization.json.JsonElement>?
 )
 
 /**
  * 좌표 DTO
  */
+@Serializable
 data class CoordinatesDto(
-    @SerializedName("lat")
+    @SerialName("lat")
     val lat: Double,
-    @SerializedName("lng")
+    @SerialName("lng")
     val lng: Double
 )
 
 /**
  * 장소 액션 DTO
  */
+@Serializable
 data class PlaceActionDto(
-    @SerializedName("type")
+    @SerialName("type")
     val type: String, // "call" | "navigate" | "share" | "bookmark" | "review"
-    @SerializedName("label")
+    @SerialName("label")
     val label: String,
-    @SerializedName("icon")
+    @SerialName("icon")
     val icon: String?,
-    @SerializedName("enabled")
+    @SerialName("enabled")
     val enabled: Boolean
 )
 
 /**
  * 즐겨찾기 아이템 DTO
  */
+@Serializable
 data class FavoriteItemDto(
-    @SerializedName("id")
+    @SerialName("id")
     val id: String,
-    @SerializedName("from")
+    @SerialName("from")
     val from: String,
-    @SerializedName("to")
+    @SerialName("to")
     val to: String,
-    @SerializedName("created_at")
+    @SerialName("created_at")
     val createdAt: Long,
-    @SerializedName("last_used_at")
+    @SerialName("last_used_at")
     val lastUsedAt: Long?,
-    @SerializedName("usage_count")
+    @SerialName("usage_count")
     val usageCount: Int,
-    @SerializedName("alias")
+    @SerialName("alias")
     val alias: String?,
-    @SerializedName("metadata")
+    @SerialName("metadata")
     val metadata: FavoriteMetadataDto?
 )
 
 /**
  * 즐겨찾기 메타데이터 DTO
  */
+@Serializable
 data class FavoriteMetadataDto(
-    @SerializedName("from_coords")
+    @SerialName("from_coords")
     val fromCoords: CoordinatesDto?,
-    @SerializedName("to_coords")
+    @SerialName("to_coords")
     val toCoords: CoordinatesDto?,
-    @SerializedName("estimated_time")
+    @SerialName("estimated_time")
     val estimatedTime: Int?,
-    @SerializedName("distance")
+    @SerialName("distance")
     val distance: Int?,
-    @SerializedName("preferred_transport")
+    @SerialName("preferred_transport")
     val preferredTransport: String? // "walk" | "car" | "public"
 ) 

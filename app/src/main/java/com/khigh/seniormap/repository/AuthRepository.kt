@@ -1,23 +1,38 @@
 package com.khigh.seniormap.repository
 
+import android.content.Intent
+import android.net.Uri
 import com.khigh.seniormap.model.dto.*
 import com.khigh.seniormap.model.entity.UserEntity
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.auth.user.UserInfo
+import io.github.jan.supabase.auth.providers.OAuthProvider
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 인증 관련 Repository 인터페이스
+ * 인증 관련 Repository 인터페이스 (Supabase 기반)
  */
 interface AuthRepository {
     
     /**
-     * OAuth 로그인
+     * Supabase OAuth 로그인 (카카오, 구글)
      */
-    suspend fun loginWithOAuth(provider: String, accessToken: String): Result<LoginResponse>
+    suspend fun loginWithOAuth(provider: OAuthProvider): Result<Unit>
+    
+    /**
+     * OAuth 딥링크 처리
+     */
+    suspend fun handleCallback(intent: Intent)
+
+    /**
+     * 현재 사용자 정보 조회
+     */
+    suspend fun getCurrentUser(): Result<UserInfo?>
     
     /**
      * 토큰 갱신
      */
-    suspend fun refreshToken(refreshToken: String): Result<LoginResponse>
+    suspend fun refreshSession(): Result<UserInfo>
     
     /**
      * 로그아웃
@@ -25,14 +40,9 @@ interface AuthRepository {
     suspend fun logout(): Result<Unit>
     
     /**
-     * 사용자 프로필 조회
-     */
-    suspend fun getProfile(): Result<UserDto>
-    
-    /**
      * 사용자 프로필 업데이트
      */
-    suspend fun updateProfile(request: ProfileUpdateRequest): Result<UserDto>
+//    suspend fun updateProfile(request: UserProfileUpdateRequest): Result<UserInfo>
     
     /**
      * 계정 삭제
@@ -78,12 +88,17 @@ interface AuthRepository {
      * 모든 토큰 삭제
      */
     suspend fun clearTokens()
-    
+
     /**
      * 로그인 상태 관찰
      */
-    fun observeAuthState(): Flow<Boolean>
+    fun observeAuthState(): Flow<SessionStatus>
     
+    /**
+     * 현재 세션 상태 조회
+     */
+    fun getCurrentSessionStatus(): SessionStatus
+
     /**
      * 현재 사용자 정보 관찰
      */

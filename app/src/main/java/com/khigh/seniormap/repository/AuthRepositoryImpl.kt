@@ -1,12 +1,23 @@
 package com.khigh.seniormap.repository
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.khigh.seniormap.model.dto.*
 import com.khigh.seniormap.model.entity.UserEntity
-import com.khigh.seniormap.network.api.AuthApi
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.OAuthProvider
+import io.github.jan.supabase.auth.providers.Google
+import io.github.jan.supabase.auth.providers.Kakao
+import io.github.jan.supabase.auth.user.UserInfo
+import com.khigh.seniormap.network.SupabaseModule
+import io.github.jan.supabase.auth.handleDeeplinks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -14,11 +25,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 인증 관련 Repository 구현체
+ * Supabase 기반 인증 Repository 구현체
  */
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val authApi: AuthApi,
+    private val supabaseClient: SupabaseClient,
     private val dataStore: DataStore<Preferences>
 ) : AuthRepository {
     
@@ -30,34 +41,37 @@ class AuthRepositoryImpl @Inject constructor(
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
     }
     
-    override suspend fun loginWithOAuth(provider: String, accessToken: String): Result<LoginResponse> {
+    override suspend fun loginWithOAuth(provider: OAuthProvider): Result<Unit> = runCatching {
+        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] loginWithOAuth: $provider")
+        supabaseClient.auth.signInWith(provider)
+    }
+
+    override suspend fun handleCallback(intent: Intent) {
+        supabaseClient.handleDeeplinks(intent)
+    }
+    
+    override suspend fun getCurrentUser(): Result<UserInfo?> {
         return try {
-            val request = OAuthLoginRequest(provider = provider, accessToken = accessToken)
-            val response = authApi.loginWithOAuth(request)
-            
-            if (response.isSuccessful) {
-                response.body()?.let { loginResponse ->
-                    Result.success(loginResponse)
-                } ?: Result.failure(Exception("Empty response body"))
-            } else {
-                Result.failure(Exception("Login failed: ${response.code()}"))
-            }
+            val user = supabaseClient.auth.currentUserOrNull()
+            // val userDto = user?.toUserDto()
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    override suspend fun refreshToken(refreshToken: String): Result<LoginResponse> {
+    override suspend fun refreshSession(): Result<UserInfo> {
         return try {
-            val request = RefreshTokenRequest(refreshToken = refreshToken)
-            val response = authApi.refreshToken(request)
+            val session = supabaseClient.auth.refreshCurrentSession()
+            val user = supabaseClient.auth.currentUserOrNull() 
             
-            if (response.isSuccessful) {
-                response.body()?.let { loginResponse ->
-                    Result.success(loginResponse)
-                } ?: Result.failure(Exception("Empty response body"))
+            // val userDto = user?.toUserDto()
+            
+            if (user != null) {
+                saveUserSessionLocally(user)
+                Result.success(user)
             } else {
-                Result.failure(Exception("Token refresh failed: ${response.code()}"))
+                Result.failure(Exception("세션 갱신 실패"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -66,77 +80,60 @@ class AuthRepositoryImpl @Inject constructor(
     
     override suspend fun logout(): Result<Unit> {
         return try {
-            val token = getAccessToken()
-            if (token != null) {
-                val response = authApi.logout("Bearer $token")
-                if (response.isSuccessful) {
-                    Result.success(Unit)
-                } else {
-                    Result.failure(Exception("Logout failed: ${response.code()}"))
-                }
-            } else {
-                Result.success(Unit) // 토큰이 없으면 이미 로그아웃 상태
-            }
+            supabaseClient.auth.signOut()
+            clearTokens()
+            clearLocalUser()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    override suspend fun getProfile(): Result<UserDto> {
-        return try {
-            val token = getAccessToken()
-            if (token != null) {
-                val response = authApi.getProfile("Bearer $token")
-                if (response.isSuccessful) {
-                    response.body()?.let { userDto ->
-                        Result.success(userDto)
-                    } ?: Result.failure(Exception("Empty response body"))
-                } else {
-                    Result.failure(Exception("Get profile failed: ${response.code()}"))
-                }
-            } else {
-                Result.failure(Exception("No access token"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updateProfile(request: ProfileUpdateRequest): Result<UserDto> {
-        return try {
-            val token = getAccessToken()
-            if (token != null) {
-                val response = authApi.updateProfile("Bearer $token", request)
-                if (response.isSuccessful) {
-                    response.body()?.let { userDto ->
-                        Result.success(userDto)
-                    } ?: Result.failure(Exception("Empty response body"))
-                } else {
-                    Result.failure(Exception("Update profile failed: ${response.code()}"))
-                }
-            } else {
-                Result.failure(Exception("No access token"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+//    override suspend fun updateProfile(request: UserProfileUpdateRequest): Result<UserInfo> {
+//        return try {
+//            val updatedUser = supabaseClient.auth.updateUser {
+//                data {
+//                    put("user_name", request.userName)
+//                    put("phone", request.phone)
+//                    put("is_helper", request.isHelper)
+//                }
+//
+//            }
+//
+//            // val userDto = updatedUser.toUserDto()
+//            saveUserSessionLocally(updatedUser)
+//
+//            Result.success(updatedUser)
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
     
     override suspend fun deleteUser(): Result<Unit> {
         return try {
-            val token = getAccessToken()
-            if (token != null) {
-                val response = authApi.deleteUser("Bearer $token")
-                if (response.isSuccessful) {
-                    Result.success(Unit)
-                } else {
-                    Result.failure(Exception("Delete user failed: ${response.code()}"))
-                }
-            } else {
-                Result.failure(Exception("No access token"))
-            }
+            // Supabase에서는 관리자 권한이 필요하므로 클라이언트에서 직접 삭제 불가
+            // 대신 서버 API를 통해 삭제 요청을 보내야 함
+            logout()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+    
+    /**
+     * Supabase 사용자 세션을 로컬에 저장
+     */
+    private suspend fun saveUserSessionLocally(user: UserInfo) {
+        val session = supabaseClient.auth.currentSessionOrNull()
+        session?.let {
+            saveAccessToken(it.accessToken)
+            saveRefreshToken(it.refreshToken ?: "")
+        }
+        
+        dataStore.edit { preferences ->
+            preferences[USER_ID_KEY] = user.id
+            preferences[USER_EMAIL_KEY] = user.email ?: ""
+            preferences[USER_NAME_KEY] = user.userMetadata?.get("name")?.toString() ?: "사용자"
         }
     }
     
@@ -207,10 +204,13 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
     
-    override fun observeAuthState(): Flow<Boolean> {
-        return dataStore.data.map { preferences ->
-            preferences[ACCESS_TOKEN_KEY] != null
-        }
+    override fun observeAuthState(): Flow<SessionStatus> {
+        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] observeAuthState")
+        return supabaseClient.auth.sessionStatus
+    }
+
+    override fun getCurrentSessionStatus(): SessionStatus {
+        return supabaseClient.auth.sessionStatus.value
     }
     
     override fun observeCurrentUser(): Flow<UserEntity?> {

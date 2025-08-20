@@ -1,6 +1,10 @@
 package com.khigh.seniormap.network.api
 
-import com.khigh.seniormap.model.dto.*
+import com.khigh.seniormap.model.dto.OAuthLoginRequest
+import com.khigh.seniormap.model.dto.LoginResponse
+import com.khigh.seniormap.model.dto.RefreshTokenRequest
+import com.khigh.seniormap.model.dto.UserDto
+import com.khigh.seniormap.model.dto.UserProfileUpdateRequest
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -47,7 +51,7 @@ interface AuthApi {
     @PUT("users/profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
-        @Body request: ProfileUpdateRequest
+        @Body request: UserProfileUpdateRequest
     ): Response<UserDto>
     
     /**

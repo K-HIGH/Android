@@ -1,97 +1,104 @@
 package com.khigh.seniormap.model.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * 알림 타입 enum
  */
+@Serializable
 enum class NotificationType {
-    @SerializedName("location_alert")
+    @SerialName("location_alert")
     LOCATION_ALERT,
-    @SerializedName("emergency")
+    @SerialName("emergency")
     EMERGENCY,
-    @SerializedName("reminder")
+    @SerialName("reminder")
     REMINDER,
-    @SerializedName("general")
+    @SerialName("general")
     GENERAL
 }
 
 /**
  * FCM 토큰 등록 요청 DTO
  */
+@Serializable
 data class FCMTokenRequest(
-    @SerializedName("fcm_token")
+    @SerialName("fcm_token")
     val fcmToken: String,
-    @SerializedName("device_type")
+    @SerialName("device_type")
     val deviceType: String = "android"
 )
 
 /**
  * 알림 설정 DTO
  */
+@Serializable
 data class NotificationSettingsDto(
-    @SerializedName("enabled")
+    @SerialName("enabled")
     val enabled: Boolean,
-    @SerializedName("location_alerts")
+    @SerialName("location_alerts")
     val locationAlerts: Boolean,
-    @SerializedName("emergency_alerts")
+    @SerialName("emergency_alerts")
     val emergencyAlerts: Boolean,
-    @SerializedName("reminders")
+    @SerialName("reminders")
     val reminders: Boolean,
-    @SerializedName("sound_enabled")
+    @SerialName("sound_enabled")
     val soundEnabled: Boolean,
-    @SerializedName("vibration_enabled")
+    @SerialName("vibration_enabled")
     val vibrationEnabled: Boolean
 )
 
 /**
  * 푸시 알림 데이터 DTO
  */
+@Serializable
 data class PushNotificationData(
-    @SerializedName("title")
+    @SerialName("title")
     val title: String?,
-    @SerializedName("body")
+    @SerialName("body")
     val body: String?,
-    @SerializedName("type")
+    @SerialName("type")
     val type: NotificationType?,
-    @SerializedName("data")
-    val data: Map<String, Any>?,
-    @SerializedName("sound")
+    @SerialName("data")
+    val data: Map<String, kotlinx.serialization.json.JsonElement>?,
+    @SerialName("sound")
     val sound: Boolean = true,
-    @SerializedName("badge")
+    @SerialName("badge")
     val badge: Int? = null
 )
 
 /**
  * 위치 알림 데이터 DTO
  */
+@Serializable
 data class LocationAlertData(
-    @SerializedName("user_id")
+    @SerialName("user_id")
     val userId: String,
-    @SerializedName("latitude")
+    @SerialName("latitude")
     val latitude: Double,
-    @SerializedName("longitude")
+    @SerialName("longitude")
     val longitude: Double,
-    @SerializedName("address")
+    @SerialName("address")
     val address: String?,
-    @SerializedName("message")
+    @SerialName("message")
     val message: String,
-    @SerializedName("timestamp")
+    @SerialName("timestamp")
     val timestamp: Long
 )
 
 /**
  * 응급 알림 데이터 DTO
  */
+@Serializable
 data class EmergencyAlertData(
-    @SerializedName("user_id")
+    @SerialName("user_id")
     val userId: String,
-    @SerializedName("urgency")
+    @SerialName("urgency")
     val urgency: String, // "low" | "medium" | "high"
-    @SerializedName("message")
+    @SerialName("message")
     val message: String,
-    @SerializedName("location")
+    @SerialName("location")
     val location: LocationAlertData?,
-    @SerializedName("timestamp")
+    @SerialName("timestamp")
     val timestamp: Long
 ) 
