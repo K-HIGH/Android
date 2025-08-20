@@ -89,7 +89,7 @@ alwaysApply: false
 ### 네트워크 통신
 - **Retrofit**: REST API 통신
 - **OkHttp**: HTTP 클라이언트, 인터셉터 활용
-- **Moshi/Gson**: JSON 직렬화/역직렬화
+- **Moshi/Kotlinx Serialization**: JSON 직렬화/역직렬화
 - **에러 핸들링**: 네트워크 오류, HTTP 오류 적절히 처리
 - **오프라인 지원**: Room과 연계한 캐싱 전략
 
