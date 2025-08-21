@@ -1,30 +1,31 @@
 package com.khigh.seniormap.network.api
 
-import com.khigh.seniormap.model.dto.*
+import com.khigh.seniormap.model.dto.auth.*
+import com.khigh.seniormap.model.dto.ApiMessage
 import retrofit2.Response
 import retrofit2.http.*
 
 /**
- * K-HIGH 서버 API 인터페이스
+ * Server API 인터페이스
  * 
  * Supabase OAuth에서 받은 access_token을 사용하여
- * K-HIGH 서버와 통신하는 API들을 정의합니다.
+ * Server와 통신하는 API들을 정의합니다.
  */
-interface KHighApi {
+interface AuthApi {
     
     // ==================== Auth API ====================
     
     /**
-     * K-HIGH 서버에 로그인
+     * Server에 로그인
      * Supabase access_token을 전달하여 서버 세션 동기화
      */
     @POST("api/v1/auth/login")
     suspend fun login(
-        @Body request: KHighLoginRequest
-    ): Response<String>
+        @Body request: UserLoginRequest
+    ): Response<ApiMessage>
     
     /**
-     * K-HIGH 서버에서 로그아웃
+     * Server에서 로그아웃
      */
     @DELETE("api/v1/auth/logout")
     suspend fun logout(
@@ -39,7 +40,7 @@ interface KHighApi {
     @GET("api/v1/users/me")
     suspend fun getCurrentUser(
         @Header("Authorization") token: String
-    ): Response<KHighUserResponse>
+    ): Response<UserLoginResponse>
     
     /**
      * 사용자 프로필 업데이트
@@ -47,7 +48,7 @@ interface KHighApi {
     @PUT("api/v1/users/me/profile")
     suspend fun updateUserProfile(
         @Header("Authorization") token: String,
-        @Body request: KHighUserProfileUpdateRequest
+        @Body request: UserProfileUpdateRequest
     ): Response<Unit>
     
     /**
@@ -56,7 +57,7 @@ interface KHighApi {
     @PUT("api/v1/users/me/alert/fcm-token")
     suspend fun updateFcmToken(
         @Header("Authorization") token: String,
-        @Body request: KHighFcmTokenRequest
+        @Body request: FcmTokenRequest
     ): Response<Unit>
     
     /**
@@ -65,7 +66,7 @@ interface KHighApi {
     @PUT("api/v1/users/me/alert/flag")
     suspend fun updateAlertFlag(
         @Header("Authorization") token: String,
-        @Body request: KHighAlertFlagRequest
+        @Body request: AlertFlagRequest
     ): Response<Unit>
     
     /**
