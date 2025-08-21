@@ -25,9 +25,9 @@ import io.github.jan.supabase.SupabaseClient
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val supabaseAuthRepository: SupabaseAuthRepository,
-    private val authRepository: AuthRepository,
-    private val TAG: String = "com.khigh.seniormap.viewmodel.AuthViewModel"
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+    private val _tag = "com.khigh.seniormap.viewmodel.AuthViewModel"
     
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -69,34 +69,34 @@ class AuthViewModel @Inject constructor(
     private fun restoreSessionIfNeeded() {
         viewModelScope.launch {
             try {
-                Log.d(TAG, "Attempting session restore on app start")
+                Log.d(_tag, "Attempting session restore on app start")
                 
                 val localUser = supabaseAuthRepository.getLocalUser()
                 val accessToken = supabaseAuthRepository.getAccessToken()
                 
                 if (localUser != null && !accessToken.isNullOrEmpty()) {
-                    Log.d(TAG, "Local session found, attempting to restore")
+                    Log.d(_tag, "Local session found, attempting to restore")
                     
                     // 현재 사용자 정보 확인
                     supabaseAuthRepository.getCurrentUser()
                         .onSuccess { user ->
                             if (user != null) {
-                                Log.d(TAG, "Session restored successfully: ${user.id}")
+                                Log.d(_tag, "Session restored successfully: ${user.id}")
                             } else {
-                                Log.w(TAG, "Session restore failed - no current user")
+                                Log.w(_tag, "Session restore failed - no current user")
                             }
                         }
                         .onFailure { error ->
-                            Log.w(TAG, "Session restore failed", error)
+                            Log.w(_tag, "Session restore failed", error)
                             // 세션 복원 실패 시 로컬 데이터 정리
                             supabaseAuthRepository.clearTokens()
                             supabaseAuthRepository.clearLocalUser()
                         }
                 } else {
-                    Log.d(TAG, "No local session found")
+                    Log.d(_tag, "No local session found")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Session restore error", e)
+                Log.e(_tag, "Session restore error", e)
             }
         }
     }
@@ -128,13 +128,13 @@ class AuthViewModel @Inject constructor(
 
             supabaseAuthRepository.handleCallback(intent)
                 .onSuccess {
-                    Log.d(TAG, "handleCallback: ${intent.data}")
+                    Log.d(_tag, "handleCallback: ${intent.data}")
                     val uri = intent.data.toString().toUri()
                     val fragment = parseFragmentParameters(uri.fragment ?: "")
                     val accessToken = fragment.get("access_token")
                     val refreshToken = fragment.get("refresh_token")
-                    Log.d(TAG, "handleCallback:accessToken: ${accessToken}")
-                    Log.d(TAG, "handleCallback:refreshToken: ${refreshToken}")
+                    Log.d(_tag, "handleCallback:accessToken: ${accessToken}")
+                    Log.d(_tag, "handleCallback:refreshToken: ${refreshToken}")
                     if (accessToken != null && refreshToken != null) {
                         supabaseAuthRepository.saveAccessToken(accessToken)
                         supabaseAuthRepository.saveRefreshToken(refreshToken)
@@ -149,16 +149,16 @@ class AuthViewModel @Inject constructor(
                 }
             
             val accessToken = supabaseAuthRepository.getAccessToken()
-            Log.d(TAG, "handleCallback:login:accessToken: ${accessToken}")
+            Log.d(_tag, "handleCallback:login:accessToken: ${accessToken}")
             if (accessToken != null) {
                 authRepository.login(UserLoginRequest(accessToken = accessToken))
                 .onSuccess {
-                    Log.d(TAG, "handleCallback:login: ${accessToken}")
+                    Log.d(_tag, "handleCallback:login: ${accessToken}")
                 }
                 .onFailure { error ->
                     _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
-                    Log.e(TAG, "handleCallback:login: ${error.message}")
-                    Log.e(TAG, "handleCallback:login: ${error.cause}")
+                    Log.e(_tag, "handleCallback:login: ${error.message}")
+                    Log.e(_tag, "handleCallback:login: ${error.cause}")
                 }
             } else {
                 _errorMessage.value = "액세스 토큰을 찾을 수 없습니다."
