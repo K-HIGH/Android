@@ -1,7 +1,8 @@
 package com.khigh.seniormap.repository
 
-import com.khigh.seniormap.model.dto.*
+import com.khigh.seniormap.model.dto.auth.*
 import com.khigh.seniormap.model.entity.UserEntity
+import com.khigh.seniormap.model.dto.ApiMessage
 
 /**
  * K-HIGH 서버 API Repository 인터페이스
@@ -17,7 +18,7 @@ interface AuthRepository {
      * K-HIGH 서버에 로그인
      * Supabase access_token을 전달하여 서버 세션 동기화
      */
-    suspend fun login(accessToken: String): Result<String>
+    suspend fun login(request: UserLoginRequest): Result<ApiMessage>
     
     /**
      * K-HIGH 서버에서 로그아웃
@@ -29,22 +30,22 @@ interface AuthRepository {
     /**
      * K-HIGH 서버에서 현재 사용자 정보 조회
      */
-    suspend fun getCurrentUser(): Result<KHighUserResponse>
+    suspend fun getCurrentUser(): Result<UserLoginResponse>
     
     /**
      * K-HIGH 서버에 사용자 프로필 업데이트
      */
-    suspend fun updateUserProfile(request: KHighUserProfileUpdateRequest): Result<Unit>
+    suspend fun updateUserProfile(request: UserProfileUpdateRequest): Result<Unit>
     
     /**
      * K-HIGH 서버에 FCM 토큰 업데이트
      */
-    suspend fun updateFcmToken(fcmToken: String): Result<Unit>
+    suspend fun updateFcmToken(request: FcmTokenRequest): Result<Unit>
     
     /**
      * K-HIGH 서버에 알림 설정 업데이트
      */
-    suspend fun updateAlertFlag(isAlert: Boolean): Result<Unit>
+    suspend fun updateAlertFlag(request: AlertFlagRequest): Result<Unit>
     
     /**
      * K-HIGH 서버에서 사용자 계정 삭제
