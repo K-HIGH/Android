@@ -3,11 +3,13 @@ package com.khigh.seniormap.viewmodel
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.khigh.seniormap.model.dto.SupabaseUserDto
-import com.khigh.seniormap.model.dto.SupabaseUserProfileUpdateRequest
+import com.khigh.seniormap.model.dto.supabaseauth.*
+import com.khigh.seniormap.model.dto.auth.*
 import com.khigh.seniormap.model.entity.UserEntity
+import com.khigh.seniormap.repository.AuthRepository
 import com.khigh.seniormap.repository.SupabaseAuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -22,8 +24,9 @@ import io.github.jan.supabase.SupabaseClient
  */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val supabaseAuthRepository: SupabaseAuthRepository
-    
+    private val supabaseAuthRepository: SupabaseAuthRepository,
+    private val authRepository: AuthRepository,
+    private val TAG: String = "com.khigh.seniormap.viewmodel.AuthViewModel"
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -66,34 +69,34 @@ class AuthViewModel @Inject constructor(
     private fun restoreSessionIfNeeded() {
         viewModelScope.launch {
             try {
-                Log.d("com.khigh.seniormap", "[AuthViewModel] Attempting session restore on app start")
+                Log.d(TAG, "Attempting session restore on app start")
                 
                 val localUser = supabaseAuthRepository.getLocalUser()
                 val accessToken = supabaseAuthRepository.getAccessToken()
                 
                 if (localUser != null && !accessToken.isNullOrEmpty()) {
-                    Log.d("com.khigh.seniormap", "[AuthViewModel] Local session found, attempting to restore")
+                    Log.d(TAG, "Local session found, attempting to restore")
                     
                     // 현재 사용자 정보 확인
                     supabaseAuthRepository.getCurrentUser()
                         .onSuccess { user ->
                             if (user != null) {
-                                Log.d("com.khigh.seniormap", "[AuthViewModel] Session restored successfully: ${user.id}")
+                                Log.d(TAG, "Session restored successfully: ${user.id}")
                             } else {
-                                Log.w("com.khigh.seniormap", "[AuthViewModel] Session restore failed - no current user")
+                                Log.w(TAG, "Session restore failed - no current user")
                             }
                         }
                         .onFailure { error ->
-                            Log.w("com.khigh.seniormap", "[AuthViewModel] Session restore failed", error)
+                            Log.w(TAG, "Session restore failed", error)
                             // 세션 복원 실패 시 로컬 데이터 정리
                             supabaseAuthRepository.clearTokens()
                             supabaseAuthRepository.clearLocalUser()
                         }
                 } else {
-                    Log.d("com.khigh.seniormap", "[AuthViewModel] No local session found")
+                    Log.d(TAG, "No local session found")
                 }
             } catch (e: Exception) {
-                Log.e("com.khigh.seniormap", "[AuthViewModel] Session restore error", e)
+                Log.e(TAG, "Session restore error", e)
             }
         }
     }
@@ -109,7 +112,7 @@ class AuthViewModel @Inject constructor(
             
             supabaseAuthRepository.loginWithOAuth(provider)
                 .onSuccess { 
-                    // handleCallback(uri)
+                    // pass
                 }
                 .onFailure { error ->
                     _errorMessage.value = error.message ?: "OAuth 로그인에 실패했습니다."
@@ -122,11 +125,45 @@ class AuthViewModel @Inject constructor(
 
     fun handleCallback(intent: Intent) {
         viewModelScope.launch {
-            try {
-                supabaseAuthRepository.handleCallback(intent)
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "OAuth 딥링크 처리에 실패했습니다."
+
+            supabaseAuthRepository.handleCallback(intent)
+                .onSuccess {
+                    Log.d(TAG, "handleCallback: ${intent.data}")
+                    val uri = intent.data.toString().toUri()
+                    val fragment = parseFragmentParameters(uri.fragment ?: "")
+                    val accessToken = fragment.get("access_token")
+                    val refreshToken = fragment.get("refresh_token")
+                    Log.d(TAG, "handleCallback:accessToken: ${accessToken}")
+                    Log.d(TAG, "handleCallback:refreshToken: ${refreshToken}")
+                    if (accessToken != null && refreshToken != null) {
+                        supabaseAuthRepository.saveAccessToken(accessToken)
+                        supabaseAuthRepository.saveRefreshToken(refreshToken)
+                    } else {
+                        _errorMessage.value = "액세스 토큰 또는 리프레시 토큰을 찾을 수 없습니다."
+                        _signingIn.value = false
+                    }
+                }
+                .onFailure { error ->
+                    _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
+                    _signingIn.value = false
+                }
+            
+            val accessToken = supabaseAuthRepository.getAccessToken()
+            Log.d(TAG, "handleCallback:login:accessToken: ${accessToken}")
+            if (accessToken != null) {
+                authRepository.login(UserLoginRequest(accessToken = accessToken))
+                .onSuccess {
+                    Log.d(TAG, "handleCallback:login: ${accessToken}")
+                }
+                .onFailure { error ->
+                    _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
+                    Log.e(TAG, "handleCallback:login: ${error.message}")
+                    Log.e(TAG, "handleCallback:login: ${error.cause}")
+                }
+            } else {
+                _errorMessage.value = "액세스 토큰을 찾을 수 없습니다."
             }
+            _signingIn.value = false
         }
     }
 
@@ -193,15 +230,19 @@ class AuthViewModel @Inject constructor(
             _signingOut.value = true
             supabaseAuthRepository.logout()
                 .onSuccess {
-                    // 로그아웃 성공 시 UI 상태 초기화
-                    _uiState.value = AuthUiState()
+                    authRepository.logout()
+                        .onSuccess {
+                        }
+                        .onFailure { error ->
+                            _errorMessage.value = error.message ?: "Server 로그아웃에 실패했습니다."
+                        }
                 }
                 .onFailure { error ->
-                    _errorMessage.value = error.message ?: "로그아웃에 실패했습니다."
+                    _errorMessage.value = error.message ?: "Supabase 로그아웃에 실패했습니다."
                     // 실패해도 로컬 상태는 리셋 (보안상 중요)
-                    _uiState.value = AuthUiState()
+                    
                 }
-            
+            _uiState.value = AuthUiState()
             // observeAuthState()가 자동으로 false를 반환하게 됨
             // (clearTokens()와 clearLocalUser()가 호출되었으므로)
             _signingOut.value = false
@@ -336,3 +377,16 @@ data class AuthUiState(
 //         refreshToken = null
 //     )
 // } 
+
+private fun parseFragmentParameters(fragment: String): Map<String, String> {
+    return fragment.split('&').mapNotNull { part ->
+        val keyValue = part.split('=', limit = 2)
+        if (keyValue.size == 2) {
+            val key = keyValue[0]
+            val value = keyValue[1]
+            key to value
+        } else {
+            null
+        }
+    }.toMap()
+}
