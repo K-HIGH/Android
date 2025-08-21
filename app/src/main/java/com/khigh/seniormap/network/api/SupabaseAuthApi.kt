@@ -1,6 +1,6 @@
 package com.khigh.seniormap.network.api
 
-import com.khigh.seniormap.model.dto.*
+import com.khigh.seniormap.model.dto.supabaseauth.*
 import retrofit2.Response
 import retrofit2.http.*
 
