@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.khigh.seniormap.ui.screens.HomeScreen
 import com.khigh.seniormap.ui.screens.LoadingScreen
 import com.khigh.seniormap.ui.screens.LoginScreen
+import com.khigh.seniormap.ui.screens.guardian.GuardianHomeScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -56,20 +57,31 @@ fun AppNavigation(
         Log.d("com.khigh.seniormap", "[AppNavigation] isAuthenticated: $isAuthenticated, authState: $authState")
         NavHost(
             navController = navController,
-            startDestination = if (isAuthenticated) "home" else "login"
+            startDestination = if (isAuthenticated) "guardian_home" else "login"
         ) {
             // 로그인 화면
             composable("login") {
                 LoginScreen(
                     onNavigateToHome = {
-                        navController.navigate("home") {
+                        navController.navigate("guardian_home") {
                             popUpTo("login") { inclusive = true }
                         }
                     }
                 )
             }
             
-            // 홈 화면
+            // 보호인 홈 화면
+            composable("guardian_home") {
+                GuardianHomeScreen(
+                    onNavigateToLogin = {
+                        navController.navigate("login") {
+                            popUpTo("guardian_home") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            // 기존 홈 화면 (필요시 유지)
             composable("home") {
                 HomeScreen(
                     onNavigateToLogin = {
