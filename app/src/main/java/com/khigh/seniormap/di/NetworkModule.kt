@@ -3,7 +3,7 @@ package com.khigh.seniormap.di
 import com.khigh.seniormap.BuildConfig
 import com.khigh.seniormap.constants.AppConstants
 import com.khigh.seniormap.network.api.SupabaseAuthApi
-import com.khigh.seniormap.network.api.KHighApi
+import com.khigh.seniormap.network.api.AuthApi
 import com.khigh.seniormap.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -37,7 +37,7 @@ object NetworkModule {
     
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
-    annotation class KHighRetrofit
+    annotation class ServerRetrofit
     
     // ==================== Common Dependencies ====================
     
@@ -106,14 +106,14 @@ object NetworkModule {
     
     @Provides
     @Singleton
-    @KHighRetrofit
-    fun provideKHighRetrofit(
+    @ServerRetrofit
+    fun provideServerRetrofit(
         json: Json
     ): Retrofit {
         val contentType = "application/json".toMediaType()
         
-        // K-HIGH API용 별도 OkHttpClient (AuthInterceptor 제외)
-        val kHighClient = OkHttpClient.Builder()
+        // Server API용 별도 OkHttpClient (AuthInterceptor 제외)
+        val serverClient = OkHttpClient.Builder()
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level = if (BuildConfig.DEBUG) {
@@ -129,15 +129,15 @@ object NetworkModule {
             .build()
         
         return Retrofit.Builder()
-            .baseUrl("http://121.157.24.40:63001/") // K-HIGH 서버 URL
-            .client(kHighClient)
+            .baseUrl("http://121.157.24.40:63001/") // Server URL
+            .client(serverClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
     }
     
     @Provides
     @Singleton
-    fun provideKHighApi(@KHighRetrofit retrofit: Retrofit): KHighApi {
-        return retrofit.create(KHighApi::class.java)
+    fun provideAuthApi(@ServerRetrofit retrofit: Retrofit): AuthApi {
+        return retrofit.create(AuthApi::class.java)
     }
 } 
