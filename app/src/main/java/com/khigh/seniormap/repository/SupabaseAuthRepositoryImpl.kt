@@ -41,8 +41,13 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
         supabaseClient.auth.signInWith(provider)
     }
 
-    override suspend fun handleCallback(intent: Intent) {
-        supabaseClient.handleDeeplinks(intent)
+    override suspend fun handleCallback(intent: Intent): Result<Unit> {
+        return try {
+            supabaseClient.handleDeeplinks(intent)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
     
     override suspend fun getCurrentUser(): Result<UserInfo?> {

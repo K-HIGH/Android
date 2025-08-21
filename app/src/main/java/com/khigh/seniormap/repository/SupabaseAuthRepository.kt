@@ -20,13 +20,13 @@ interface SupabaseAuthRepository {
     /**
      * OAuth 딥링크 처리
      */
-    suspend fun handleCallback(intent: Intent)
+    suspend fun handleCallback(intent: Intent): Result<Unit>
 
     /**
      * 현재 사용자 정보 조회
      */
     suspend fun getCurrentUser(): Result<UserInfo?>
-    
+
     /**
      * 토큰 갱신
      */
