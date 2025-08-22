@@ -11,6 +11,7 @@ data class UserEntity(
     @PrimaryKey
     val id: String,
     val email: String,
+    val isRegistered: Boolean,
     val userName: String,
     val phone: String?,
     val isCaregiver: Boolean,
