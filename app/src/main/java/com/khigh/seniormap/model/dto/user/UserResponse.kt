@@ -1,4 +1,4 @@
-package com.khigh.seniormap.model.dto.auth
+package com.khigh.seniormap.model.dto.user
 
 import com.khigh.seniormap.model.entity.UserEntity
 import kotlinx.serialization.Serializable
@@ -10,10 +10,9 @@ data class UserResponse(
     val alert: UserAlertDto
 )
 
-fun UserResponse.toUserEntity(id: String, email: String, accessToken: String, refreshToken: String): UserEntity {
+fun UserResponse.toEntity(): UserEntity {
     return UserEntity(
-        id = id,
-        email = email,
+        id = user.userId,
         isRegistered = user.isRegistered,
         userName = profile.userName,
         phone = profile.phone,
@@ -21,8 +20,6 @@ fun UserResponse.toUserEntity(id: String, email: String, accessToken: String, re
         isHelper = profile.isHelper,
         fcmToken = alert.fcmToken,
         isAlert = alert.isAlert,
-        accessToken = accessToken,
-        refreshToken = refreshToken,
         lastSyncTime = System.currentTimeMillis()
     )
 }
