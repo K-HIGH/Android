@@ -21,8 +21,11 @@ import com.khigh.seniormap.ui.screens.guardian.components.*
 @Composable
 fun GuardianHomeScreen(
     modifier: Modifier = Modifier,
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToEdit: (GuardianData) -> Unit = {}
 ) {
+    // 수정 모드 상태 추가
+    var isEditMode by remember { mutableStateOf(false) }
     // 임시 데이터 - 실제로는 ViewModel에서 가져올 데이터
     val guardians = remember {
         listOf(
@@ -59,9 +62,13 @@ fun GuardianHomeScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            // 상단 헤더
+            // 수정된 헤더 (수정 버튼 추가)
             GuardianHeader(
                 title = "나의 피보호인",
+                isEditMode = isEditMode,
+                onEditClick = {
+                    isEditMode = !isEditMode // 수정 모드 토글
+                },
                 onAddClick = {
                     // TODO: 피보호인 추가 화면으로 이동
                 }
@@ -85,14 +92,22 @@ fun GuardianHomeScreen(
         ) {
             when (selectedTab) {
                 0 -> {
-                    // 홈 탭 - 피보호인 목록
+                    // 홈 탭 - 피보호인 목록 (수정 모드 전달)
                     GuardianList(
                         guardians = guardians,
+                        isEditMode = isEditMode,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(top = 8.dp),
                         onGuardianClick = { guardian ->
-                            // TODO: 피보호인 상세 화면으로 이동
+                            // 일반 모드에서만 상세 화면 이동
+                            if (!isEditMode) {
+                                // TODO: 피보호인 상세 화면으로 이동
+                            }
+                        },
+                        onGuardianEdit = { guardian ->
+                            // 수정 화면으로 이동
+                            onNavigateToEdit(guardian)
                         }
                     )
                 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
@@ -26,8 +27,10 @@ import androidx.compose.ui.unit.dp
  * @param profileImageRes 프로필 이미지 리소스 ID (null이면 기본 아이콘 사용)
  * @param statusIcon 상태 아이콘
  * @param statusColor 상태 색상
+ * @param isEditMode 수정 모드 여부
  * @param modifier 레이아웃 수정자
  * @param onClick 클릭 이벤트 콜백
+ * @param onEditClick 수정 버튼 클릭 이벤트 콜백
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,11 +40,13 @@ fun GuardianListItem(
     profileImageRes: Int? = null,
     statusIcon: ImageVector = Icons.Default.Home,
     statusColor: Color = Color(0xFF4CAF50),
+    isEditMode: Boolean = false,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onEditClick: () -> Unit = {}
 ) {
     Card(
-        onClick = onClick,
+        onClick = if (!isEditMode) onClick else { {} },
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -109,13 +114,30 @@ fun GuardianListItem(
                 )
             }
             
-            // 상태 아이콘
-            Icon(
-                imageVector = statusIcon,
-                contentDescription = "상태",
-                modifier = Modifier.size(24.dp),
-                tint = statusColor
-            )
+            // 수정 모드일 때 수정 버튼 표시
+            if (isEditMode) {
+                IconButton(
+                    onClick = onEditClick,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "수정",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else {
+                // 일반 모드일 때 상태 아이콘
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = "상태",
+                    modifier = Modifier.size(24.dp),
+                    tint = statusColor
+                )
+            }
         }
     }
 }

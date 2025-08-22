@@ -15,14 +15,18 @@ import androidx.compose.ui.unit.dp
  * 보호인 목록 컴포넌트
  * 
  * @param guardians 보호인 목록 데이터
+ * @param isEditMode 수정 모드 여부
  * @param modifier 레이아웃 수정자
  * @param onGuardianClick 보호인 클릭 이벤트 콜백
+ * @param onGuardianEdit 보호인 수정 이벤트 콜백
  */
 @Composable
 fun GuardianList(
     guardians: List<GuardianData>,
+    isEditMode: Boolean = false,
     modifier: Modifier = Modifier,
-    onGuardianClick: (GuardianData) -> Unit = {}
+    onGuardianClick: (GuardianData) -> Unit = {},
+    onGuardianEdit: (GuardianData) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier,
@@ -36,7 +40,9 @@ fun GuardianList(
                 profileImageRes = guardian.profileImageRes,
                 statusIcon = if (guardian.isAtHome) Icons.Default.Home else Icons.Default.LocationOn,
                 statusColor = if (guardian.isAtHome) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                onClick = { onGuardianClick(guardian) }
+                isEditMode = isEditMode,
+                onClick = { onGuardianClick(guardian) },
+                onEditClick = { onGuardianEdit(guardian) }
             )
         }
     }

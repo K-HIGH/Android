@@ -10,10 +10,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.khigh.seniormap.ui.screens.HomeScreen
 import com.khigh.seniormap.ui.screens.LoadingScreen
 import com.khigh.seniormap.ui.screens.LoginScreen
 import com.khigh.seniormap.ui.screens.guardian.GuardianHomeScreen
+import com.khigh.seniormap.ui.screens.guardian.EditGuardianScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -77,6 +80,40 @@ fun AppNavigation(
                         navController.navigate("login") {
                             popUpTo("guardian_home") { inclusive = true }
                         }
+                    },
+                    onNavigateToEdit = { guardianData ->
+                        navController.navigate("edit_guardian/${guardianData.id}") {
+                            // 뒤로 가기 시 홈 화면으로 돌아감
+                        }
+                    }
+                )
+            }
+            
+            // 피보호인 수정 화면
+            composable(
+                route = "edit_guardian/{guardianId}",
+                arguments = listOf(
+                    navArgument("guardianId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val guardianId = backStackEntry.arguments?.getString("guardianId") ?: ""
+                // TODO: 실제로는 ViewModel에서 guardianId로 데이터를 가져와야 함
+                val guardianData = com.khigh.seniormap.ui.screens.guardian.components.GuardianData(
+                    id = guardianId,
+                    name = "임시 피보호인",
+                    location = "임시 위치",
+                    isAtHome = true
+                )
+                
+                EditGuardianScreen(
+                    guardianData = guardianData,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onSave = { updatedGuardian ->
+                        // TODO: 실제로는 ViewModel을 통해 데이터를 저장해야 함
+                        Log.d("AppNavigation", "Guardian updated: $updatedGuardian")
+                        navController.popBackStack()
                     }
                 )
             }
