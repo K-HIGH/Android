@@ -139,6 +139,29 @@ fun AppNavigation(
                         navController.navigate("login") {
                             popUpTo("home") { inclusive = true }
                         }
+                    },
+                    onNavigateToProfile = { person ->
+                        // 프로필 화면으로 이동 (나중에 구현)
+                        Log.d("AppNavigation", "Navigate to profile: ${person.name}")
+                    },
+                    onNavigateToAddPerson = {
+                        // 부모님 추가 화면으로 이동 (나중에 구현)
+                        Log.d("AppNavigation", "Navigate to add person")
+                    },
+                    onNavigate = { route ->
+                        when (route) {
+                            "home" -> {
+                                // 이미 홈 화면에 있음
+                            }
+                            "map" -> {
+                                // 지도 화면으로 이동 (나중에 구현)
+                                Log.d("AppNavigation", "Navigate to map")
+                            }
+                            "settings" -> {
+                                // 설정 화면으로 이동 (나중에 구현)
+                                Log.d("AppNavigation", "Navigate to settings")
+                            }
+                        }
                     }
                 )
             }

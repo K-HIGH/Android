@@ -88,17 +88,6 @@ fun LoginScreen(
             modifier = Modifier
                 .padding(32.dp)
         ) {
-            // 앱 제목
-            Text(
-                text = "SeniorMap",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // 앱 설명
             Text(
                 text = "시니어를 위한 안전한 지도 서비스",
