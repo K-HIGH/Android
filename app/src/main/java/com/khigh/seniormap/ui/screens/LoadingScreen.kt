@@ -45,13 +45,13 @@ fun LoadingScreen(
         // 로그인 진행 중이 아닐 때만 네비게이션 처리
         if (!isSigningIn) {
             when (isUserRegistered) {
-                // 역할 선택이 필요한 경우 (신규 사용자)
+                // 역할 선택이 필요하지 않은 경우 (기존 사용자)
                 true -> {
                     Log.d(_tag, "[LaunchedEffect] No need role selection, navigating to home")
                     onNavigateToHome()
                 }
-                // 인증 완료된 기존 사용자
-                else -> {
+                // 역할 선택이 필요한 경우 (신규 사용자)
+                false -> {
                     Log.d(_tag, "[LaunchedEffect] role selection, navigating to role selection")
                     onNavigateToRoleSelection()
                 }
