@@ -195,37 +195,7 @@ class AuthViewModel @Inject constructor(
     // fun onAuthResultHandled() {
     //     _signingIn.value = false
     // }
-    
-    /**
-     * 역할 선택 완료 처리
-     * @param isCaregiver true: 보호자, false: 피보호인
-     */
-    fun onRoleSelected(isCaregiver: Boolean) {
-        viewModelScope.launch {
-            try {
-                Log.d(_tag, "onRoleSelected: Role selected - isCaregiver: $isCaregiver")
-                
-                // 역할 선택 상태 초기화
-                _isUserRegistered.value = false
-                
-                // TODO: 필요시 서버에 역할 정보 업데이트 API 호출
-                // authRepository.updateUserRole(isCaregiver)
-                
-                Log.d(_tag, "onRoleSelected: Role selection completed successfully")
-                
-            } catch (e: Exception) {
-                Log.e(_tag, "onRoleSelected: Error occurred", e)
-                _errorMessage.value = "역할 선택 처리 중 오류가 발생했습니다."
-            }
-        }
-    }
-    
-    /**
-     * 역할 선택 상태 초기화
-     */
-    fun clearRoleSelectionState() {
-        _isUserRegistered.value = false
-    }
+
     
     /**
      * 이메일/패스워드 로그인
@@ -415,24 +385,6 @@ data class AuthUiState(
     val isOAuthFlow: Boolean = false,
     val oAuthUrl: String? = null
 )
-
-/**
- * UserDto를 UserEntity로 변환하는 확장 함수
- */
-// private fun UserDto.toEntity(): UserEntity {
-//     return UserEntity(
-//         id = this.id,
-//         email = this.email,
-//         userName = this.userName,
-//         phone = this.phone,
-//         isCaregiver = this.isCaregiver,
-//         isHelper = this.isHelper,
-//         fcmToken = this.fcmToken,
-//         isAlert = this.isAlert,
-//         accessToken = null,
-//         refreshToken = null
-//     )
-// } 
 
 private fun parseFragmentParameters(fragment: String): Map<String, String> {
     return fragment.split('&').mapNotNull { part ->
