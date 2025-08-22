@@ -1,5 +1,5 @@
 ---
-description: This rule is applied only when the user mentions not to modify the legacy code
+description: This rule is applied only when the user mentions not to modify the legacy code or adds this ruleset
 alwaysApply: false
 ---
 

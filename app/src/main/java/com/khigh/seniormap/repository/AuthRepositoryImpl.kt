@@ -1,239 +1,145 @@
 package com.khigh.seniormap.repository
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.khigh.seniormap.model.dto.*
+import com.khigh.seniormap.model.dto.auth.*
+import com.khigh.seniormap.model.dto.user.UserResponse
+import com.khigh.seniormap.repository.SupabaseAuthRepository
 import com.khigh.seniormap.model.entity.UserEntity
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.OAuthProvider
-import io.github.jan.supabase.auth.providers.Google
-import io.github.jan.supabase.auth.providers.Kakao
-import io.github.jan.supabase.auth.user.UserInfo
-import com.khigh.seniormap.network.SupabaseModule
-import io.github.jan.supabase.auth.handleDeeplinks
-import kotlinx.coroutines.flow.Flow
+import com.khigh.seniormap.network.api.AuthApi
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import retrofit2.Response
 
 /**
- * Supabase 기반 인증 Repository 구현체
+ * K-HIGH 서버 API Repository 구현체
+ * 
+ * K-HIGH 서버와의 통신을 담당하며, Supabase 토큰을 사용하여
+ * 서버와 통신하고 사용자 정보를 관리합니다.
  */
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val supabaseClient: SupabaseClient,
-    private val dataStore: DataStore<Preferences>
+    private val authApi: AuthApi,
+    private val dataStore: DataStore<Preferences>,
+    private val supabaseAuthRepository: SupabaseAuthRepository,
 ) : AuthRepository {
     
     companion object {
-        private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
-        private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
-        private val USER_ID_KEY = stringPreferencesKey("user_id")
-        private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
-        private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val SUPABASE_ACCESS_TOKEN_KEY = stringPreferencesKey("supabase_access_token")
+        private const val TAG = "com.khigh.seniormap.repository.AuthRepositoryImpl"
+        private val USER_ENTITY_KEY = stringPreferencesKey("user_entity")
     }
     
-    override suspend fun loginWithOAuth(provider: OAuthProvider): Result<Unit> = runCatching {
-        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] loginWithOAuth: $provider")
-        supabaseClient.auth.signInWith(provider)
-    }
-
-    override suspend fun handleCallback(intent: Intent) {
-        supabaseClient.handleDeeplinks(intent)
-    }
+    // ==================== Auth API ====================
     
-    override suspend fun getCurrentUser(): Result<UserInfo?> {
+    override suspend fun login(request: UserLoginRequest): Result<Response<UserResponse>> {
         return try {
-            val user = supabaseClient.auth.currentUserOrNull()
-            // val userDto = user?.toUserDto()
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun refreshSession(): Result<UserInfo> {
-        return try {
-            val session = supabaseClient.auth.refreshCurrentSession()
-            val user = supabaseClient.auth.currentUserOrNull() 
+            Log.d(TAG, "login: Attempting to login with Supabase token")
             
-            // val userDto = user?.toUserDto()
+            val response = authApi.login(request)
             
-            if (user != null) {
-                saveUserSessionLocally(user)
-                Result.success(user)
+            if (response.isSuccessful) {
+                // Supabase access_token을 캐싱
+                saveSupabaseAccessToken(request.accessToken)
+                Log.d(TAG, "login: Login successful, Supabase token cached")
+                Result.success(response)
             } else {
-                Result.failure(Exception("세션 갱신 실패"))
+                Log.e(TAG, "login: Login failed - ${response.code()}: ${response.message()}")
+                Result.failure(Exception("K-HIGH 서버 로그인 실패: ${response.message()}"))
             }
         } catch (e: Exception) {
+            Log.e(TAG, "login: Exception occurred", e)
             Result.failure(e)
         }
     }
     
     override suspend fun logout(): Result<Unit> {
         return try {
-            supabaseClient.auth.signOut()
-            clearTokens()
-            clearLocalUser()
-            Result.success(Unit)
+            val token = getSupabaseAccessToken()
+            if (token.isNullOrEmpty()) {
+                Log.w(TAG, "logout: No token found, skipping server logout")
+                clearSupabaseAccessToken()
+                return Result.success(Unit)
+            }
+            
+            Log.d(TAG, "logout: Attempting to logout from K-HIGH server")
+            
+            val response = authApi.logout("Bearer $token")
+            
+            if (response.isSuccessful) {
+                clearSupabaseAccessToken()
+                Log.d(TAG, "logout: Logout successful")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "logout: Logout failed - ${response.code()}: ${response.message()}")
+                // 실패해도 로컬 토큰은 삭제
+                clearSupabaseAccessToken()
+                Result.failure(Exception("K-HIGH 서버 로그아웃 실패: ${response.message()}"))
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "logout: Exception occurred", e)
+            // 예외 발생해도 로컬 토큰은 삭제
+            clearSupabaseAccessToken()
             Result.failure(e)
         }
     }
     
-//    override suspend fun updateProfile(request: UserProfileUpdateRequest): Result<UserInfo> {
-//        return try {
-//            val updatedUser = supabaseClient.auth.updateUser {
-//                data {
-//                    put("user_name", request.userName)
-//                    put("phone", request.phone)
-//                    put("is_helper", request.isHelper)
-//                }
-//
-//            }
-//
-//            // val userDto = updatedUser.toUserDto()
-//            saveUserSessionLocally(updatedUser)
-//
-//            Result.success(updatedUser)
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
+    // ==================== 통합 기능 ====================
     
-    override suspend fun deleteUser(): Result<Unit> {
+    override suspend fun syncWithServer(
+        supabaseAccessToken: String,
+    ): Result<Unit> {
         return try {
-            // Supabase에서는 관리자 권한이 필요하므로 클라이언트에서 직접 삭제 불가
-            // 대신 서버 API를 통해 삭제 요청을 보내야 함
-            logout()
+            Log.d(TAG, "syncWithServer: Starting sync process")
+            
+            // K-HIGH 서버에 로그인 (Supabase 토큰 캐싱)
+            val loginResult = login(UserLoginRequest(accessToken = supabaseAccessToken))
+            if (loginResult.isFailure) {
+                Log.e(TAG, "syncWithServer: K-HIGH login failed")
+                return Result.failure(loginResult.exceptionOrNull() ?: Exception("K-HIGH 로그인 실패"))
+            }
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "syncWithServer: Exception occurred", e)
             Result.failure(e)
         }
     }
     
-    /**
-     * Supabase 사용자 세션을 로컬에 저장
-     */
-    private suspend fun saveUserSessionLocally(user: UserInfo) {
-        val session = supabaseClient.auth.currentSessionOrNull()
-        session?.let {
-            saveAccessToken(it.accessToken)
-            saveRefreshToken(it.refreshToken ?: "")
-        }
-        
-        dataStore.edit { preferences ->
-            preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email ?: ""
-            preferences[USER_NAME_KEY] = user.userMetadata?.get("name")?.toString() ?: "사용자"
-        }
-    }
-    
-    override suspend fun saveUserLocally(user: UserEntity) {
-        dataStore.edit { preferences ->
-            preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email
-            preferences[USER_NAME_KEY] = user.userName
-        }
-    }
-    
-    override suspend fun getLocalUser(): UserEntity? {
+    override suspend fun getUserEntity(): UserEntity? {
         val preferences = dataStore.data.first()
-        val userId = preferences[USER_ID_KEY]
-        val userEmail = preferences[USER_EMAIL_KEY]
-        val userName = preferences[USER_NAME_KEY]
-        
-        return if (userId != null && userEmail != null && userName != null) {
-            UserEntity(
-                id = userId,
-                email = userEmail,
-                userName = userName,
-                phone = null,
-                isCaregiver = false,
-                isHelper = false,
-                fcmToken = null,
-                isAlert = false,
-                accessToken = getAccessToken(),
-                refreshToken = getRefreshToken()
-            )
-        } else {
-            null
-        }
-    }
-    
-    override suspend fun clearLocalUser() {
-        dataStore.edit { preferences ->
-            preferences.remove(USER_ID_KEY)
-            preferences.remove(USER_EMAIL_KEY)
-            preferences.remove(USER_NAME_KEY)
-        }
-    }
-    
-    override suspend fun saveAccessToken(token: String) {
-        dataStore.edit { preferences ->
-            preferences[ACCESS_TOKEN_KEY] = token
-        }
-    }
-    
-    override suspend fun getAccessToken(): String? {
-        return dataStore.data.first()[ACCESS_TOKEN_KEY]
-    }
-    
-    override suspend fun saveRefreshToken(token: String) {
-        dataStore.edit { preferences ->
-            preferences[REFRESH_TOKEN_KEY] = token
-        }
-    }
-    
-    override suspend fun getRefreshToken(): String? {
-        return dataStore.data.first()[REFRESH_TOKEN_KEY]
-    }
-    
-    override suspend fun clearTokens() {
-        dataStore.edit { preferences ->
-            preferences.remove(ACCESS_TOKEN_KEY)
-            preferences.remove(REFRESH_TOKEN_KEY)
-        }
-    }
-    
-    override fun observeAuthState(): Flow<SessionStatus> {
-        Log.d("com.khigh.seniormap", "[AuthRepositoryImpl] observeAuthState")
-        return supabaseClient.auth.sessionStatus
+        return preferences[USER_ENTITY_KEY]?.let { Json.decodeFromString<UserEntity>(it) }
     }
 
-    override fun getCurrentSessionStatus(): SessionStatus {
-        return supabaseClient.auth.sessionStatus.value
+    override suspend fun saveUserEntity(userEntity: UserEntity) {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[USER_ENTITY_KEY] = Json.encodeToString(userEntity)
+            }
+        }
+    }
+
+    // ==================== Private Helper Methods ====================
+    private suspend fun saveSupabaseAccessToken(token: String) {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[SUPABASE_ACCESS_TOKEN_KEY] = token
+            }
+        }
     }
     
-    override fun observeCurrentUser(): Flow<UserEntity?> {
-        return dataStore.data.map { preferences ->
-            val userId = preferences[USER_ID_KEY]
-            val userEmail = preferences[USER_EMAIL_KEY]
-            val userName = preferences[USER_NAME_KEY]
-            
-            if (userId != null && userEmail != null && userName != null) {
-                UserEntity(
-                    id = userId,
-                    email = userEmail,
-                    userName = userName,
-                    phone = null,
-                    isCaregiver = false,
-                    isHelper = false,
-                    fcmToken = null,
-                    isAlert = false,
-                    accessToken = preferences[ACCESS_TOKEN_KEY],
-                    refreshToken = preferences[REFRESH_TOKEN_KEY]
-                )
-            } else {
-                null
+    private suspend fun getSupabaseAccessToken(): String? {
+        val preferences = dataStore.data.first()
+        return preferences[SUPABASE_ACCESS_TOKEN_KEY]
+    }
+    
+    private suspend fun clearSupabaseAccessToken() {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                remove(SUPABASE_ACCESS_TOKEN_KEY)
             }
         }
     }

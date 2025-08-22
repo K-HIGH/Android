@@ -1,63 +1,43 @@
 package com.khigh.seniormap.network.api
 
-import com.khigh.seniormap.model.dto.OAuthLoginRequest
-import com.khigh.seniormap.model.dto.LoginResponse
-import com.khigh.seniormap.model.dto.RefreshTokenRequest
-import com.khigh.seniormap.model.dto.UserDto
-import com.khigh.seniormap.model.dto.UserProfileUpdateRequest
+import com.khigh.seniormap.model.dto.auth.*
+import com.khigh.seniormap.model.dto.user.UserResponse
+import com.khigh.seniormap.model.dto.ApiMessage
 import retrofit2.Response
 import retrofit2.http.*
 
 /**
- * 인증 관련 API 인터페이스
+ * Server API 인터페이스
+ * 
+ * Supabase OAuth에서 받은 access_token을 사용하여
+ * Server와 통신하는 API들을 정의합니다.
  */
 interface AuthApi {
     
-    /**
-     * OAuth 로그인
-     */
-    @POST("auth/oauth")
-    suspend fun loginWithOAuth(
-        @Body request: OAuthLoginRequest
-    ): Response<LoginResponse>
+    // ==================== Auth API ====================
     
     /**
-     * 토큰 갱신
+     * Server에 로그인
+     * Supabase access_token을 전달하여 서버 세션 동기화
      */
-    @POST("auth/refresh")
-    suspend fun refreshToken(
-        @Body request: RefreshTokenRequest
-    ): Response<LoginResponse>
+    @POST("api/v1/auth/login")
+    suspend fun login(
+        @Body request: UserLoginRequest
+    ): Response<UserResponse>
     
     /**
-     * 로그아웃
+     * Server에서 로그아웃
      */
-    @POST("auth/logout")
+    @DELETE("api/v1/auth/logout")
     suspend fun logout(
         @Header("Authorization") token: String
     ): Response<Unit>
     
+    // ==================== User API ====================
     /**
-     * 사용자 프로필 조회
+     * 사용자 계정 삭제
      */
-    @GET("users/profile")
-    suspend fun getProfile(
-        @Header("Authorization") token: String
-    ): Response<UserDto>
-    
-    /**
-     * 사용자 프로필 업데이트
-     */
-    @PUT("users/profile")
-    suspend fun updateProfile(
-        @Header("Authorization") token: String,
-        @Body request: UserProfileUpdateRequest
-    ): Response<UserDto>
-    
-    /**
-     * 계정 삭제
-     */
-    @DELETE("users/profile")
+    @DELETE("api/v1/users/me")
     suspend fun deleteUser(
         @Header("Authorization") token: String
     ): Response<Unit>

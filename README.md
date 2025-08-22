@@ -16,3 +16,39 @@ Kotlin
 # 4 실행
 adb shell am force-stop com.khigh.seniormap
 ~/Library/Android/sdk/platform-tools/adb shell am start -n "com.khigh.seniormap/com.khigh.seniormap.ui.activities.MainActivity"
+
+# 시뮬레이터 logcat 추적
+adb logcat | grep com.khigh.seniormap
+
+# 향후 진행할 앱의 아키텍처 구조
+app/
+ ├─ data/
+ │   ├─ local/
+ │   │   ├─ db/
+ │   │   │   ├─ AppDatabase.kt
+ │   │   │   └─ dao/
+ │   │   │       └─ UserDao.kt
+ │   │   └─ entity/
+ │   │       └─ UserEntity.kt
+ │   ├─ remote/
+ │   │   ├─ api/
+ │   │   └─ dto/
+ │   ├─ mapper/
+ │   │   └─ UserMapper.kt
+ │   └─ repository/
+ │       └─ UserRepositoryImpl.kt
+ ├─ domain/
+ │   ├─ auth/
+ │   │   ├─ model/
+ │   │   │   └─ User.kt
+ │   │   ├─ repository/
+ │   │   │   └─ UserRepository.kt
+ │   │   └─ usecase/
+ │   │       ├─ LoginUseCase.kt
+ │   │       └─ RefreshTokenUseCase.kt
+ │   ├─ user/
+ │   │   ├─ model/
+ │   │   ├─ repository/
+ │   │   └─ usecase/
+ │   │       ├─ FetchUserProfileUseCase.kt
+ │   │       └─ UpdateUserInfoUseCase.kt
