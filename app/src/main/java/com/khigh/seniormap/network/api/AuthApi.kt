@@ -22,7 +22,7 @@ interface AuthApi {
     @POST("api/v1/auth/login")
     suspend fun login(
         @Body request: UserLoginRequest
-    ): Response<ApiMessage>
+    ): Response<UserResponse>
     
     /**
      * Server에서 로그아웃
@@ -40,7 +40,7 @@ interface AuthApi {
     @GET("api/v1/users/me")
     suspend fun getCurrentUser(
         @Header("Authorization") token: String
-    ): Response<UserLoginResponse>
+    ): Response<UserResponse>
     
     /**
      * 사용자 프로필 업데이트
