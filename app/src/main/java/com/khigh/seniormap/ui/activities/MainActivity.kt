@@ -20,6 +20,7 @@ import com.khigh.seniormap.ui.composables.navigation.AppNavigation
 import com.khigh.seniormap.ui.theme.SeniorMapTheme
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import com.khigh.seniormap.viewmodel.UserViewModel
+import com.khigh.seniormap.viewmodel.CaregiverViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.auth
@@ -143,6 +144,7 @@ class MainActivity : ComponentActivity() {
     private fun MainContent() {
         val authViewModel: AuthViewModel = hiltViewModel()
         val userViewModel: UserViewModel = hiltViewModel()
+        val caregiverViewModel: CaregiverViewModel = hiltViewModel()
         // ViewModel 준비 상태 확인 및 참조 저장
         val isViewModelReady by authViewModel.isReady.collectAsState()
         
@@ -174,6 +176,7 @@ class MainActivity : ComponentActivity() {
             AppNavigation(
                 authViewModel = authViewModel,
                 userViewModel = userViewModel,
+                caregiverViewModel = caregiverViewModel,
                 modifier = Modifier.padding(innerPadding),
                 isAuthenticated = authState != SessionStatus.NotAuthenticated(),
                 isSigningIn = isSigningIn,

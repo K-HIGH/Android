@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.khigh.seniormap.ui.screens.guardian.components.GuardianData
 
 /**
  * 보호인 목록 컴포넌트
@@ -31,7 +32,7 @@ fun GuardianList(
     ) {
         items(guardians) { guardian ->
             GuardianListItem(
-                name = guardian.name,
+                name = guardian.userName,
                 location = guardian.location,
                 profileImageRes = guardian.profileImageRes,
                 statusIcon = if (guardian.isAtHome) Icons.Default.Home else Icons.Default.LocationOn,

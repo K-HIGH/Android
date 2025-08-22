@@ -18,6 +18,7 @@ import com.khigh.seniormap.ui.screens.RoleSelectionScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.khigh.seniormap.viewmodel.UserViewModel
+import com.khigh.seniormap.viewmodel.CaregiverViewModel
 
 
 /**
@@ -39,6 +40,7 @@ import com.khigh.seniormap.viewmodel.UserViewModel
 fun AppNavigation(
     authViewModel: AuthViewModel,
     userViewModel: UserViewModel,
+    caregiverViewModel: CaregiverViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     isAuthenticated: Boolean = false,
     isSigningIn: Boolean = false,
@@ -128,7 +130,8 @@ fun AppNavigation(
                         navController.navigate("login") {
                             popUpTo("guardian_home") { inclusive = true }
                         }
-                    }
+                    },
+                    caregiverViewModel = caregiverViewModel
                 )
             }
             

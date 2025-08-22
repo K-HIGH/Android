@@ -10,6 +10,8 @@ import com.khigh.seniormap.repository.AuthRepository
 import com.khigh.seniormap.repository.AuthRepositoryImpl
 import com.khigh.seniormap.repository.UserRepository
 import com.khigh.seniormap.repository.UserRepositoryImpl
+import com.khigh.seniormap.repository.CaregiverRepository
+import com.khigh.seniormap.repository.CaregiverRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -60,6 +62,15 @@ abstract class DataModule {
     abstract fun bindUserRepository(
         userRepositoryImpl: UserRepositoryImpl
     ): UserRepository
+    
+    /**
+     * CaregiverRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCaregiverRepository(
+        caregiverRepositoryImpl: CaregiverRepositoryImpl
+    ): CaregiverRepository
 
     companion object {
         

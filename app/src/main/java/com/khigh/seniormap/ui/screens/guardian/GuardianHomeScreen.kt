@@ -1,11 +1,16 @@
 package com.khigh.seniormap.ui.screens.guardian
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.khigh.seniormap.ui.screens.guardian.components.*
+import com.khigh.seniormap.viewmodel.CaregiverViewModel
+import android.util.Log
+import com.khigh.seniormap.model.dto.caregiver.*
 
 /**
  * 보호인 홈 화면 컴포넌트
@@ -21,50 +26,57 @@ import com.khigh.seniormap.ui.screens.guardian.components.*
 @Composable
 fun GuardianHomeScreen(
     modifier: Modifier = Modifier,
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    caregiverViewModel: CaregiverViewModel
 ) {
     // 임시 데이터 - 실제로는 ViewModel에서 가져올 데이터
-    val guardians = remember {
-        listOf(
-            GuardianData(
-                id = "1",
-                name = "김할자",
-                location = "집",
-                isAtHome = true
-            ),
-            GuardianData(
-                id = "2", 
-                name = "송진호",
-                location = "마을",
-                isAtHome = false
-            ),
-            GuardianData(
-                id = "3",
-                name = "나문희", 
-                location = "집",
-                isAtHome = true
-            ),
-            GuardianData(
-                id = "4",
-                name = "최불암",
-                location = "마을",
-                isAtHome = false
-            )
-        )
-    }
+    // val guardians = remember {
+    //     listOf(
+    //         GuardianData(
+    //             id = "1",
+    //             name = "김할자",
+    //             location = "집",
+    //             isAtHome = true
+    //         ),
+    //         GuardianData(
+    //             id = "2", 
+    //             name = "송진호",
+    //             location = "마을",
+    //             isAtHome = false
+    //         ),
+    //         GuardianData(
+    //             id = "3",
+    //             name = "나문희", 
+    //             location = "집",
+    //             isAtHome = true
+    //         ),
+    //         GuardianData(
+    //             id = "4",
+    //             name = "최불암",
+    //             location = "마을",
+    //             isAtHome = false
+    //         )
+    //     )
+    // }
     
     // 현재 선택된 하단 네비게이션 탭
     var selectedTab by remember { mutableIntStateOf(0) }
     
+    LaunchedEffect(caregiverViewModel) {
+        caregiverViewModel.getCaregivers()
+    }
+
+    val caregivers by caregiverViewModel.caregivers.collectAsState()
+
+    Log.d("GuardianHomeScreen", "caregivers: ${caregivers}")
+    Log.d("GuardianHomeScreen", "caregivers size: ${caregivers.size}")
     Scaffold(
         modifier = modifier,
         topBar = {
             // 상단 헤더
             GuardianHeader(
-                title = "나의 피보호인",
-                onAddClick = {
-                    // TODO: 피보호인 추가 화면으로 이동
-                }
+                title = "돋보길",
+                caregiverViewModel = caregiverViewModel
             )
         },
         bottomBar = {
@@ -87,19 +99,23 @@ fun GuardianHomeScreen(
                 0 -> {
                     // 홈 탭 - 피보호인 목록
                     GuardianList(
-                        guardians = guardians,
+                        guardians = caregivers.map { it.toGuardianData() },
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(top = 8.dp),
+                            .padding(top = 8.dp)
+                            .background(Color(0xFFF5F5E5)),
                         onGuardianClick = { guardian ->
                             // TODO: 피보호인 상세 화면으로 이동
+                            Log.d("GuardianHomeScreen", "guardian: ${guardian}")
                         }
                     )
                 }
                 1 -> {
                     // 지도 탭 - 지도 화면 (임시)
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFFF5F5E5)),
                         contentAlignment = androidx.compose.ui.Alignment.Center
                     ) {
                         Text(
@@ -111,7 +127,8 @@ fun GuardianHomeScreen(
                 2 -> {
                     // 설정 탭 - 설정 화면 (임시)
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize()
+                            .background(Color(0xFFF5F5E5)),
                         contentAlignment = androidx.compose.ui.Alignment.Center
                     ) {
                         Text(

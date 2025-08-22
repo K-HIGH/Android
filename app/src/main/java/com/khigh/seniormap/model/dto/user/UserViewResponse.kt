@@ -4,17 +4,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserProfileDto(
+data class UserViewResponse(
+    @SerialName("user_ulid")
+    val userUlid: String,
     @SerialName("user_name")
     val userName: String,
+    @SerialName("email")
+    val email: String,
     @SerialName("phone")
-    val phone: String?,
+    val phone: String? = null,
     @SerialName("address")
-    val address: String?,
+    val address: String? = null,
     @SerialName("emergency_contact")
-    val emergencyContact: String?,
-    @SerialName("is_caregiver")
-    val isCaregiver: Boolean,
-    @SerialName("is_helper")
-    val isHelper: Boolean,
+    val emergencyContact: String? = null
 )

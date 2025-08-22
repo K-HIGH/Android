@@ -4,11 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.khigh.seniormap.viewmodel.CaregiverViewModel
 
 /**
  * 보호인 홈 화면 헤더 컴포넌트
@@ -21,8 +22,9 @@ import androidx.compose.ui.unit.dp
 fun GuardianHeader(
     title: String = "나의 피보호인",
     modifier: Modifier = Modifier,
-    onAddClick: () -> Unit = {}
+    caregiverViewModel: CaregiverViewModel
 ) {
+    var showAddModal by remember { mutableStateOf(false) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -38,7 +40,9 @@ fun GuardianHeader(
         )
         
         IconButton(
-            onClick = onAddClick,
+            onClick = {
+                showAddModal = true
+            },
             colors = IconButtonDefaults.iconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -51,4 +55,11 @@ fun GuardianHeader(
             )
         }
     }
+    
+    // 피보호인 추가 모달
+    AddCaregiverModal(
+        isVisible = showAddModal,
+        onDismiss = { showAddModal = false },
+        caregiverViewModel = caregiverViewModel
+    )
 }

@@ -12,6 +12,8 @@ data class UserDto(
     val userId: String,
     @SerialName("user_ulid")
     val userUlid: String,
+    @SerialName("email")
+    val email: String,
     @SerialName("oauth_platform")
     val oauthPlatform: String,
     @SerialName("openid")
