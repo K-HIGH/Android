@@ -32,7 +32,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
         private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
         private val USER_ID_KEY = stringPreferencesKey("user_id")
-        private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
     }
     
@@ -132,7 +131,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
         
         dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email ?: ""
             preferences[USER_NAME_KEY] = user.userMetadata?.get("name")?.toString() ?: "사용자"
         }
     }
@@ -140,7 +138,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
     override suspend fun saveUserLocally(user: UserEntity) {
         dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = user.id
-            preferences[USER_EMAIL_KEY] = user.email
             preferences[USER_NAME_KEY] = user.userName
         }
     }
@@ -148,13 +145,11 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
     override suspend fun getLocalUser(): UserEntity? {
         val preferences = dataStore.data.first()
         val userId = preferences[USER_ID_KEY]
-        val userEmail = preferences[USER_EMAIL_KEY]
         val userName = preferences[USER_NAME_KEY]
         
-        return if (userId != null && userEmail != null && userName != null) {
+        return if (userId != null && userName != null) {
             UserEntity(
                 id = userId,
-                email = userEmail,
                 isRegistered = false,
                 userName = userName,
                 phone = null,
@@ -162,8 +157,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
                 isHelper = false,
                 fcmToken = null,
                 isAlert = false,
-                accessToken = getAccessToken(),
-                refreshToken = getRefreshToken()
             )
         } else {
             null
@@ -173,7 +166,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
     override suspend fun clearLocalUser() {
         dataStore.edit { preferences ->
             preferences.remove(USER_ID_KEY)
-            preferences.remove(USER_EMAIL_KEY)
             preferences.remove(USER_NAME_KEY)
         }
     }
@@ -217,13 +209,11 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
     override fun observeCurrentUser(): Flow<UserEntity?> {
         return dataStore.data.map { preferences ->
             val userId = preferences[USER_ID_KEY]
-            val userEmail = preferences[USER_EMAIL_KEY]
             val userName = preferences[USER_NAME_KEY]
             
-            if (userId != null && userEmail != null && userName != null) {
+            if (userId != null && userName != null) {
                 UserEntity(
                     id = userId,
-                    email = userEmail,
                     isRegistered = false,
                     userName = userName,
                     phone = null,
@@ -231,8 +221,6 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
                     isHelper = false,
                     fcmToken = null,
                     isAlert = false,
-                    accessToken = preferences[ACCESS_TOKEN_KEY],
-                    refreshToken = preferences[REFRESH_TOKEN_KEY]
                 )
             } else {
                 null
