@@ -37,9 +37,16 @@ class AuthViewModel @Inject constructor(
 
     private val _signingOut = MutableStateFlow(false)
     val isSigningOut: StateFlow<Boolean> = _signingOut.asStateFlow()
-    
+
+    private val _isUserRegistered = MutableStateFlow(false)
+    val isUserRegistered: StateFlow<Boolean> = _isUserRegistered.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    
+    // ViewModel 초기화 완료 상태
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
     
     // 인증 상태 관찰
     val authState = supabaseAuthRepository.observeAuthState()
@@ -61,6 +68,12 @@ class AuthViewModel @Inject constructor(
         checkAuthState()
         // 앱 시작 시 세션 복원 시도
         restoreSessionIfNeeded()
+        
+        // 초기화 완료 표시
+        viewModelScope.launch {
+            _isReady.value = true
+            Log.d(_tag, "AuthViewModel initialization completed")
+        }
     }
     
     /**
@@ -125,7 +138,8 @@ class AuthViewModel @Inject constructor(
 
     fun handleCallback(intent: Intent) {
         viewModelScope.launch {
-
+            Log.d(_tag, "handleCallback start: _signingIn.value: ${_signingIn.value}")
+            _signingIn.value = true
             supabaseAuthRepository.handleCallback(intent)
                 .onSuccess {
                     Log.d(_tag, "handleCallback: ${intent.data}")
@@ -150,25 +164,67 @@ class AuthViewModel @Inject constructor(
             
             val accessToken = supabaseAuthRepository.getAccessToken()
             Log.d(_tag, "handleCallback:login:accessToken: ${accessToken}")
+            Log.d(_tag, "accessToken before login: _signingIn.value: ${_signingIn.value}")
             if (accessToken != null) {
                 authRepository.login(UserLoginRequest(accessToken = accessToken))
-                .onSuccess {
-                    Log.d(_tag, "handleCallback:login: ${accessToken}")
+                .onSuccess { response ->
+                    Log.d(_tag, "handleCallback:login:response: ${response}, _signingIn.value: ${_signingIn.value}")
+                    Log.d(_tag, "handleCallback:login: ${accessToken}, _signingIn.value: ${_signingIn.value}")
+
+                    response.body()?.let { user ->
+                        Log.d(_tag, "handleCallback:login:user.user.isRegistered: ${user.user.isRegistered}, _signingIn.value: ${_signingIn.value}")
+                        _isUserRegistered.value = user.user.isRegistered
+                    }
+
+                    _signingIn.value = false
+                    Log.d(_tag, "handleCallback:login: _signingIn: ${_signingIn.value}")
                 }
                 .onFailure { error ->
                     _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
                     Log.e(_tag, "handleCallback:login: ${error.message}")
                     Log.e(_tag, "handleCallback:login: ${error.cause}")
+                    _signingIn.value = false
                 }
             } else {
                 _errorMessage.value = "액세스 토큰을 찾을 수 없습니다."
+                _signingIn.value = false
             }
-            _signingIn.value = false
         }
     }
 
-    fun onAuthResultHandled() {
-        _signingIn.value = false
+    // fun onAuthResultHandled() {
+    //     _signingIn.value = false
+    // }
+    
+    /**
+     * 역할 선택 완료 처리
+     * @param isCaregiver true: 보호자, false: 피보호인
+     */
+    fun onRoleSelected(isCaregiver: Boolean) {
+        viewModelScope.launch {
+            try {
+                Log.d(_tag, "onRoleSelected: Role selected - isCaregiver: $isCaregiver")
+                
+                // 역할 선택 상태 초기화
+                _isUserRegistered.value = false
+                
+                // TODO: 필요시 서버에 역할 정보 업데이트 API 호출
+                // authRepository.updateUserRole(isCaregiver)
+                
+                Log.d(_tag, "onRoleSelected: Role selection completed successfully")
+                
+            } catch (e: Exception) {
+                Log.e(_tag, "onRoleSelected: Error occurred", e)
+                _errorMessage.value = "역할 선택 처리 중 오류가 발생했습니다."
+            }
+        }
+    }
+    
+    /**
+     * 역할 선택 상태 초기화
+     */
+    fun clearRoleSelectionState() {
+        _isUserRegistered.value = false
     }
     
     /**

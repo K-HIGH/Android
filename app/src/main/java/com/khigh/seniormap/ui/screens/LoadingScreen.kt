@@ -1,12 +1,18 @@
 package com.khigh.seniormap.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.khigh.seniormap.viewmodel.AuthViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.khigh.seniormap.model.entity.UserEntity
 
 /**
  * 로딩 화면 컴포넌트
@@ -19,12 +25,44 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun LoadingScreen(
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToRoleSelection: () -> Unit = {},
     modifier: Modifier = Modifier,
-    message: String = "로딩 중..."
+    message: String = "로딩 중...",
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    Log.d("com.khigh.seniormap", "[LoadingScreen] message: $message")
+
+    val _tag = "com.khigh.seniormap.LoadingScreen"
+    Log.d(_tag, "message: $message")
+
+    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val isSigningIn by authViewModel.isSigningIn.collectAsStateWithLifecycle()
+    val isUserRegistered by authViewModel.isUserRegistered.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isSigningIn, isUserRegistered) {
+        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, isUserRegistered: $isUserRegistered")
+        
+        // 로그인 진행 중이 아닐 때만 네비게이션 처리
+        if (!isSigningIn) {
+            when (isUserRegistered) {
+                // 역할 선택이 필요한 경우 (신규 사용자)
+                true -> {
+                    Log.d(_tag, "[LaunchedEffect] No need role selection, navigating to home")
+                    onNavigateToHome()
+                }
+                // 인증 완료된 기존 사용자
+                else -> {
+                    Log.d(_tag, "[LaunchedEffect] role selection, navigating to role selection")
+                    onNavigateToRoleSelection()
+                }
+            }
+        }
+    }
+    
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5E5)),
         contentAlignment = Alignment.Center
     ) {
         Column(

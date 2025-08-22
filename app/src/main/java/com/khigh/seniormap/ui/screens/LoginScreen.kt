@@ -1,6 +1,7 @@
 package com.khigh.seniormap.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 // import androidx.compose.material.icons.filled.Login
@@ -19,6 +20,8 @@ import com.khigh.seniormap.viewmodel.AuthViewModel
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.Kakao
 import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * 로그인 화면 컴포넌트
@@ -32,54 +35,58 @@ import io.github.jan.supabase.auth.status.SessionStatus
  */
 @Composable
 fun LoginScreen(
-    onNavigateToHome: () -> Unit = {},
+    onNavigateToLoading: () -> Unit = {},
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    Log.d("com.khigh.seniormap", "[LoginScreen] onNavigateToHome: $onNavigateToHome")
+    val _tag = "com.khigh.seniormap.LoginScreen"
+    Log.d(_tag, "onNavigateToLoading: $onNavigateToLoading")
     
     val context = LocalContext.current
-    val uiState by authViewModel.uiState.collectAsState()
-    val isSigningIn by authViewModel.isSigningIn.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
-    val authState by authViewModel.authState.collectAsState()
+    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val isSigningIn by authViewModel.isSigningIn.collectAsStateWithLifecycle()
+    val isUserRegistered by authViewModel.isUserRegistered.collectAsStateWithLifecycle()
+    val errorMessage by authViewModel.errorMessage.collectAsStateWithLifecycle()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
     
-    // 인증 성공 시 홈으로 이동
+    // 인증 성공 시 네비게이션 처리
     LaunchedEffect(authState, isSigningIn) {
-        Log.d("com.khigh.seniormap", "[LoginScreen] isSigningIn: $isSigningIn, authState: $authState")
+        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, authState: $authState")
+        
+        // 로그인 진행 중이 아닐 때만 네비게이션 처리
         if (isSigningIn) {
-            when (authState) {
-                is SessionStatus.Authenticated -> {
-                    Log.d("com.khigh.seniormap", "[LoginScreen] Authentication successful, navigating to home")
-                    onNavigateToHome()
-                    authViewModel.onAuthResultHandled()
+            when {
+                // 인증 완료된 기존 사용자
+                authState is SessionStatus.Authenticated -> {
+                    Log.d(_tag, "[LaunchedEffect] Login complete, navigating to loading")
+                    onNavigateToLoading()
                 }
-                // is SessionStatus.NotAuthenticated -> {
-                //     Log.d("com.khigh.seniormap", "[LoginScreen] Authentication failed, navigating to login")
-                // }
                 else -> {
-                    Log.d("com.khigh.seniormap", "[LoginScreen] Authentication state: $authState")
+                    Log.d(_tag, "[LaunchedEffect] Authentication state: $authState")
                 }
             }
         }
     }
-    
+
     // 에러 메시지 처리
     errorMessage?.let { message ->
         LaunchedEffect(message) {
-            Log.e("com.khigh.seniormap", "[LoginScreen] Error: $message")
+            Log.e(_tag, "[LaunchedEffect] Error: $message")
             // TODO: 스낵바나 다이얼로그로 에러 표시
         }
     }
     
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5E5)),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(32.dp)
+            modifier = Modifier
+                .padding(32.dp)
         ) {
             // 앱 제목
             Text(
@@ -118,11 +125,11 @@ fun LoginScreen(
                 // OAuth 로그인 버튼들
                 LoginButtonsSection(
                     onKakaoLogin = {
-                        Log.d("com.khigh.seniormap", "[LoginScreen] Kakao login clicked")
+                        Log.d(_tag, "[LoginScreen] Kakao login clicked")
                         authViewModel.loginWithOAuth(Kakao)
                     },
                     onGoogleLogin = {
-                        Log.d("com.khigh.seniormap", "[LoginScreen] Google login clicked")
+                        Log.d(_tag, "[LoginScreen] Google login clicked")
                         authViewModel.loginWithOAuth(Google)
                     }
                 )
