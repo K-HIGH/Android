@@ -155,6 +155,7 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
             UserEntity(
                 id = userId,
                 email = userEmail,
+                isRegistered = false,
                 userName = userName,
                 phone = null,
                 isCaregiver = false,
@@ -223,6 +224,7 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
                 UserEntity(
                     id = userId,
                     email = userEmail,
+                    isRegistered = false,
                     userName = userName,
                     phone = null,
                     isCaregiver = false,
