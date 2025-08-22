@@ -16,6 +16,8 @@ import com.khigh.seniormap.ui.screens.LoginScreen
 import com.khigh.seniormap.ui.screens.RoleSelectionScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.khigh.seniormap.viewmodel.UserViewModel
+
 
 /**
  * 앱의 메인 네비게이션 컴포넌트
@@ -25,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
  * 로딩 상태와 에러 처리도 담당합니다.
  * 
  * @param authViewModel 인증 관련 ViewModel (외부에서 전달)
+ * @param userViewModel 사용자 관련 ViewModel (외부에서 전달)
  * @param modifier 레이아웃 수정자
  * @param isAuthenticated 사용자 인증 상태
  * @param isSigningIn 로그인 상태
@@ -34,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun AppNavigation(
     authViewModel: AuthViewModel,
+    userViewModel: UserViewModel,
     modifier: Modifier = Modifier,
     isAuthenticated: Boolean = false,
     isSigningIn: Boolean = false,
@@ -44,6 +48,8 @@ fun AppNavigation(
 
     val authState by authViewModel.authState.collectAsState()
     val isUserRegistered by authViewModel.isUserRegistered.collectAsState()
+    val isCaregiver by userViewModel.isCaregiver.collectAsState()
+    val isHelper by userViewModel.isHelper.collectAsState()
     
     // 에러 메시지 표시
     errorMessage?.let { message ->
@@ -56,7 +62,9 @@ fun AppNavigation(
     // 네비게이션 상태 결정
     val startDestination = when {
         isUserRegistered -> "role_selection"
-        isAuthenticated -> "home"
+        !isAuthenticated -> "login"
+        isAuthenticated && !isUserRegistered -> "role_selection"
+        isAuthenticated && isUserRegistered -> "home"
         else -> "login"
     }
     
@@ -95,15 +103,13 @@ fun AppNavigation(
             // 역할 선택 화면
             composable("role_selection") {
                 RoleSelectionScreen(
-                    onRoleSelected = { isCaregiver ->
-                        // 역할 선택 완료 처리
-                        authViewModel.onRoleSelected(isCaregiver)
-                        
+                    onRoleSelected = { isCaregiver, isHelper ->
                         // 홈 화면으로 이동
                         navController.navigate("home") {
                             popUpTo("role_selection") { inclusive = true }
                         }
-                    }
+                    },
+                    userViewModel = userViewModel
                 )
             }
             

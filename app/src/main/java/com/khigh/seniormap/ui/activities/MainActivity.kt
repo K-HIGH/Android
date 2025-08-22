@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.khigh.seniormap.ui.composables.navigation.AppNavigation
 import com.khigh.seniormap.ui.theme.SeniorMapTheme
 import com.khigh.seniormap.viewmodel.AuthViewModel
+import com.khigh.seniormap.viewmodel.UserViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.auth
@@ -141,7 +142,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MainContent() {
         val authViewModel: AuthViewModel = hiltViewModel()
-        
+        val userViewModel: UserViewModel = hiltViewModel()
         // ViewModel 준비 상태 확인 및 참조 저장
         val isViewModelReady by authViewModel.isReady.collectAsState()
         
@@ -172,6 +173,7 @@ class MainActivity : ComponentActivity() {
         ) { innerPadding ->
             AppNavigation(
                 authViewModel = authViewModel,
+                userViewModel = userViewModel,
                 modifier = Modifier.padding(innerPadding),
                 isAuthenticated = authState != SessionStatus.NotAuthenticated(),
                 isSigningIn = isSigningIn,
