@@ -65,7 +65,7 @@ fun LoadingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5E5)),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -84,7 +84,7 @@ fun LoadingScreen(
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

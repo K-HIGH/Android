@@ -44,14 +44,14 @@ fun GuardianHeader(
                 showAddModal = true
             },
             colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "피보호인 추가",
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(30.dp)
             )
         }
     }

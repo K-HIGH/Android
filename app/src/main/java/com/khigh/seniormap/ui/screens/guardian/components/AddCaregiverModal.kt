@@ -77,7 +77,7 @@ fun AddCaregiverModal(
                             text = "피보호인 추가",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         
                         IconButton(

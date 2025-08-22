@@ -2,106 +2,35 @@ package com.khigh.seniormap.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-/**
- * SeniorMap 앱의 컬러 팔레트
- * Material 3 디자인 시스템을 기반으로 구성됨
- */
+// Figma 무드보드 기반 색상 팔레트
+val SeniorMapGreen = Color(0xFF98D5B3)         // 메인 초록색 (연한 초록)
+val SeniorMapBlue = Color(0xFFACB8E8)          // 서브 파란색 (연한 파랑)
+val SeniorMapYellow = Color(0xFFFFFF01)        // 강조 노란색
+val SeniorMapRed = Color(0xFFBA3631)           // 경고/에러 빨간색
+val SeniorMapWhite = Color(0xFFFFFFFF)         // 순백색
 
-// Primary Colors (메인 브랜드 컬러 - 시니어를 위한 따뜻한 블루)
-val Primary0 = Color(0xFF000000)
-val Primary10 = Color(0xFF001D35)
-val Primary20 = Color(0xFF003258)
-val Primary30 = Color(0xFF004A7C)
-val Primary40 = Color(0xFF0062A1)
-val Primary50 = Color(0xFF007BC7)
-val Primary60 = Color(0xFF0095EE)
-val Primary70 = Color(0xFF47AEFF)
-val Primary80 = Color(0xFF7CC7FF)
-val Primary90 = Color(0xFFB8E3FF)
-val Primary95 = Color(0xFFDCF1FF)
-val Primary99 = Color(0xFFFCFCFF)
-val Primary100 = Color(0xFFFFFFFF)
+// 배경 및 표면 색상
+val SeniorMapBackground = Color(0xFFFCFCF7)    // 크림색 배경
+val SeniorMapSurface = Color(0xFFF5F5E5)       // 연한 크림색 표면
 
-// Secondary Colors (보조 컬러 - 안전을 상징하는 그린)
-val Secondary0 = Color(0xFF000000)
-val Secondary10 = Color(0xFF002114)
-val Secondary20 = Color(0xFF003827)
-val Secondary30 = Color(0xFF00513C)
-val Secondary40 = Color(0xFF006B52)
-val Secondary50 = Color(0xFF008569)
-val Secondary60 = Color(0xFF00A081)
-val Secondary70 = Color(0xFF1CBC9A)
-val Secondary80 = Color(0xFF4DD8B4)
-val Secondary90 = Color(0xFF72F5D0)
-val Secondary95 = Color(0xFFB0FFDF)
-val Secondary99 = Color(0xFFF5FFF9)
-val Secondary100 = Color(0xFFFFFFFF)
+// 텍스트 색상
+val SeniorMapTextPrimary = Color(0xFF1C1C0D)   // 진한 회색 (메인 텍스트)
+val SeniorMapTextSecondary = Color(0xFF9E9E47) // 갈색 회색 (서브 텍스트)
+val SeniorMapTextTertiary = Color(0xFFA1A145)  // 연한 갈색 회색 (플레이스홀더)
 
-// Tertiary Colors (강조 컬러 - 따뜻한 오렌지)
-val Tertiary0 = Color(0xFF000000)
-val Tertiary10 = Color(0xFF321300)
-val Tertiary20 = Color(0xFF4F2500)
-val Tertiary30 = Color(0xFF6E3900)
-val Tertiary40 = Color(0xFF8E4E00)
-val Tertiary50 = Color(0xFFB06400)
-val Tertiary60 = Color(0xFFD37B00)
-val Tertiary70 = Color(0xFFFF9500)
-val Tertiary80 = Color(0xFFFFB95C)
-val Tertiary90 = Color(0xFFFFDDB8)
-val Tertiary95 = Color(0xFFFFEEDC)
-val Tertiary99 = Color(0xFFFFFBF7)
-val Tertiary100 = Color(0xFFFFFFFF)
+// 테두리 및 구분선 색상
+val SeniorMapBorder = Color(0xFFEBEBCC)        // 연한 갈색 테두리
 
-// Error Colors (에러 컬러)
-val Error0 = Color(0xFF000000)
-val Error10 = Color(0xFF410002)
-val Error20 = Color(0xFF690005)
-val Error30 = Color(0xFF93000A)
-val Error40 = Color(0xFFBA1A1A)
-val Error50 = Color(0xFFDE3730)
-val Error60 = Color(0xFFFF5449)
-val Error70 = Color(0xFFFF897D)
-val Error80 = Color(0xFFFFB4AB)
-val Error90 = Color(0xFFFFDAD6)
-val Error95 = Color(0xFFFFEDEA)
-val Error99 = Color(0xFFFFFBFF)
-val Error100 = Color(0xFFFFFFFF)
+// 상태 색상
+val SeniorMapSuccess = Color(0xFF4CAF50)       // 성공 (집에 있음)
+val SeniorMapWarning = Color(0xFFFF9800)       // 경고 (외출 중)
+val SeniorMapError = Color(0xFFFF383C)         // 에러 (미승인)
 
-// Neutral Colors (중성 컬러)
-val Neutral0 = Color(0xFF000000)
-val Neutral10 = Color(0xFF1A1C1E)
-val Neutral20 = Color(0xFF2F3033)
-val Neutral30 = Color(0xFF46474A)
-val Neutral40 = Color(0xFF5E5E62)
-val Neutral50 = Color(0xFF76777A)
-val Neutral60 = Color(0xFF909094)
-val Neutral70 = Color(0xFFABABAF)
-val Neutral80 = Color(0xFFC6C6CA)
-val Neutral90 = Color(0xFFE2E2E6)
-val Neutral95 = Color(0xFFF1F0F4)
-val Neutral99 = Color(0xFFFFFBFF)
-val Neutral100 = Color(0xFFFFFFFF)
+// 기존 Material Design 색상 (호환성 유지)
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
 
-// Neutral Variant Colors (중성 변형 컬러)
-val NeutralVariant0 = Color(0xFF000000)
-val NeutralVariant10 = Color(0xFF191C20)
-val NeutralVariant20 = Color(0xFF2E3135)
-val NeutralVariant30 = Color(0xFF44474C)
-val NeutralVariant40 = Color(0xFF5C5F64)
-val NeutralVariant50 = Color(0xFF75777C)
-val NeutralVariant60 = Color(0xFF8F9196)
-val NeutralVariant70 = Color(0xFFA9ABB0)
-val NeutralVariant80 = Color(0xFFC5C6CB)
-val NeutralVariant90 = Color(0xFFE1E2E7)
-val NeutralVariant95 = Color(0xFFEFF0F5)
-val NeutralVariant99 = Color(0xFFFFFBFF)
-val NeutralVariant100 = Color(0xFFFFFFFF)
-
-// 추가 시맨틱 컬러 (앱 특화 컬러)
-val Success = Color(0xFF00C853)
-val Warning = Color(0xFFFF9800)
-val Info = Color(0xFF2196F3)
-
-// 투명도 컬러
-val SurfaceTransparent = Color(0x80FFFFFF)
-val OverlayDark = Color(0x80000000) 
+val Purple40 = Color(0xFF6650a4)
+val PurpleGrey40 = Color(0xFF625b71)
+val Pink40 = Color(0xFF7D5260) 

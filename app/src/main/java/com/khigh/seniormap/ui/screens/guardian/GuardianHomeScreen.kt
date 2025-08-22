@@ -103,7 +103,7 @@ fun GuardianHomeScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(top = 8.dp)
-                            .background(Color(0xFFF5F5E5)),
+                            .background(MaterialTheme.colorScheme.background),
                         onGuardianClick = { guardian ->
                             // TODO: 피보호인 상세 화면으로 이동
                             Log.d("GuardianHomeScreen", "guardian: ${guardian}")
@@ -115,12 +115,13 @@ fun GuardianHomeScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFFF5F5E5)),
+                            .background(MaterialTheme.colorScheme.background),
                         contentAlignment = androidx.compose.ui.Alignment.Center
                     ) {
                         Text(
                             text = "지도 화면 (구현 예정)",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -128,12 +129,13 @@ fun GuardianHomeScreen(
                     // 설정 탭 - 설정 화면 (임시)
                     Box(
                         modifier = Modifier.fillMaxSize()
-                            .background(Color(0xFFF5F5E5)),
+                            .background(MaterialTheme.colorScheme.background),
                         contentAlignment = androidx.compose.ui.Alignment.Center
                     ) {
                         Text(
                             text = "설정 화면 (구현 예정)",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

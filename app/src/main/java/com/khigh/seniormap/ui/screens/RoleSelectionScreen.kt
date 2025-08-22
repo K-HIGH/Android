@@ -31,13 +31,6 @@ fun RoleSelectionScreen(
     modifier: Modifier = Modifier,
     userViewModel: UserViewModel
 ) {
-    // 무드보드 컬러 팔레트
-    val primaryGreen = Color(0xFF98D5B3)
-    val accentBlue = Color(0xFFACB8E8) 
-    val backgroundColor = Color(0xFFF5F5E5)
-    val textPrimary = Color(0xFF1C1C0D)
-    val textSecondary = Color(0xFF9E9E47)
-
     fun updateUserProfile(isCaregiver: Boolean, isHelper: Boolean) {
         Log.d("com.khigh.seniormap", "[RoleSelectionScreen] updateUserProfile: isCaregiver: $isCaregiver, isHelper: $isHelper")
         userViewModel.updateUserProfile(UserProfileUpdateRequest(isCaregiver = isCaregiver, isHelper = isHelper))
@@ -47,7 +40,7 @@ fun RoleSelectionScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(MaterialTheme.colorScheme.background)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -57,7 +50,7 @@ fun RoleSelectionScreen(
             text = "SeniorMap",
             fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = textPrimary,
+            color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 0.96.sp,
             textAlign = TextAlign.Center
         )
@@ -68,7 +61,7 @@ fun RoleSelectionScreen(
             text = "안전한 시니어 케어 서비스",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = textSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 0.54.sp,
             textAlign = TextAlign.Center
         )
@@ -80,7 +73,7 @@ fun RoleSelectionScreen(
             text = "역할을 선택해주세요",
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = textPrimary,
+            color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 0.72.sp,
             textAlign = TextAlign.Center
         )
@@ -98,7 +91,7 @@ fun RoleSelectionScreen(
                 subtitle = "회원님의 자녀",
                 description = "회원님의 안전을\n실시간으로 확인할 수 있어요",
                 icon = Icons.Default.Person,
-                backgroundColor = primaryGreen,
+                backgroundColor = MaterialTheme.colorScheme.primary,
                 onClick = { 
                     updateUserProfile(true, false)
                 }
@@ -110,7 +103,7 @@ fun RoleSelectionScreen(
                 subtitle = "회원님의 부모님",
                 description = "안전한 외출과 응급상황 시\n빠른 도움을 받을 수 있어요",
                 icon = Icons.Default.AccountCircle,
-                backgroundColor = accentBlue,
+                backgroundColor = MaterialTheme.colorScheme.secondary,
                 onClick = { 
                     updateUserProfile(false, false)
                 }
@@ -122,7 +115,7 @@ fun RoleSelectionScreen(
                 subtitle = "도우미",
                 description = "도우미와 함께 안전하게 케어를 받을 수 있어요",
                 icon = Icons.Default.Person,
-                backgroundColor = Color(0xFFE8B3C7),
+                backgroundColor = MaterialTheme.colorScheme.tertiary,
                 onClick = { 
                     updateUserProfile(false, true)
                 }
@@ -136,7 +129,7 @@ fun RoleSelectionScreen(
             text = "선택하신 역할에 따라 맞춤형 기능을 제공합니다",
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
-            color = textSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             letterSpacing = 0.42.sp
         )
@@ -194,7 +187,7 @@ private fun RoleSelectionCard(
                         imageVector = icon,
                         contentDescription = title,
                         modifier = Modifier.size(32.dp),
-                        tint = Color(0xFF1C1C0D)
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -208,7 +201,7 @@ private fun RoleSelectionCard(
                     text = title,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF1C1C0D),
+                    color = MaterialTheme.colorScheme.onBackground,
                     letterSpacing = 0.6.sp
                 )
                 
@@ -216,7 +209,7 @@ private fun RoleSelectionCard(
                     text = subtitle,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF9E9E47),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 0.42.sp
                 )
                 
@@ -226,7 +219,7 @@ private fun RoleSelectionCard(
                     text = description,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = Color(0xFF1C1C0D).copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     lineHeight = 16.sp,
                     letterSpacing = 0.36.sp
                 )

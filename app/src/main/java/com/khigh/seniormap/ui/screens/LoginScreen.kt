@@ -79,7 +79,7 @@ fun LoginScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5E5)),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -92,7 +92,7 @@ fun LoginScreen(
             Text(
                 text = "SeniorMap",
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold
             )
@@ -103,7 +103,7 @@ fun LoginScreen(
             Text(
                 text = "시니어를 위한 안전한 지도 서비스",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             
@@ -182,8 +182,8 @@ private fun LoginButtonsSection(
             onClick = onKakaoLogin,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFEE500), // 카카오 노란색
-                contentColor = Color(0xFF191919)
+                containerColor = MaterialTheme.colorScheme.tertiary, // Figma 노란색
+                contentColor = MaterialTheme.colorScheme.onTertiary
             ),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
