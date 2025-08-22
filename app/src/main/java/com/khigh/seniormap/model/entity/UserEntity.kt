@@ -10,14 +10,12 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey
     val id: String,
-    val email: String,
+    val isRegistered: Boolean,
     val userName: String,
     val phone: String?,
     val isCaregiver: Boolean,
     val isHelper: Boolean,
     val fcmToken: String?,
     val isAlert: Boolean,
-    val accessToken: String?,
-    val refreshToken: String?,
     val lastSyncTime: Long = System.currentTimeMillis()
 ) 

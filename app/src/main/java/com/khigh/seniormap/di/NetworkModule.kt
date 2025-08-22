@@ -4,6 +4,7 @@ import com.khigh.seniormap.BuildConfig
 import com.khigh.seniormap.constants.AppConstants
 import com.khigh.seniormap.network.api.SupabaseAuthApi
 import com.khigh.seniormap.network.api.AuthApi
+import com.khigh.seniormap.network.api.UserApi
 import com.khigh.seniormap.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -139,5 +140,11 @@ object NetworkModule {
     @Singleton
     fun provideAuthApi(@ServerRetrofit retrofit: Retrofit): AuthApi {
         return retrofit.create(AuthApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideUserApi(@ServerRetrofit retrofit: Retrofit): UserApi {
+        return retrofit.create(UserApi::class.java)
     }
 } 

@@ -1,6 +1,7 @@
 package com.khigh.seniormap.network.api
 
 import com.khigh.seniormap.model.dto.auth.*
+import com.khigh.seniormap.model.dto.user.UserResponse
 import com.khigh.seniormap.model.dto.ApiMessage
 import retrofit2.Response
 import retrofit2.http.*
@@ -22,7 +23,7 @@ interface AuthApi {
     @POST("api/v1/auth/login")
     suspend fun login(
         @Body request: UserLoginRequest
-    ): Response<ApiMessage>
+    ): Response<UserResponse>
     
     /**
      * Server에서 로그아웃
@@ -33,42 +34,6 @@ interface AuthApi {
     ): Response<Unit>
     
     // ==================== User API ====================
-    
-    /**
-     * 현재 사용자 정보 조회
-     */
-    @GET("api/v1/users/me")
-    suspend fun getCurrentUser(
-        @Header("Authorization") token: String
-    ): Response<UserLoginResponse>
-    
-    /**
-     * 사용자 프로필 업데이트
-     */
-    @PUT("api/v1/users/me/profile")
-    suspend fun updateUserProfile(
-        @Header("Authorization") token: String,
-        @Body request: UserProfileUpdateRequest
-    ): Response<Unit>
-    
-    /**
-     * FCM 토큰 업데이트
-     */
-    @PUT("api/v1/users/me/alert/fcm-token")
-    suspend fun updateFcmToken(
-        @Header("Authorization") token: String,
-        @Body request: FcmTokenRequest
-    ): Response<Unit>
-    
-    /**
-     * 알림 설정 업데이트
-     */
-    @PUT("api/v1/users/me/alert/flag")
-    suspend fun updateAlertFlag(
-        @Header("Authorization") token: String,
-        @Body request: AlertFlagRequest
-    ): Response<Unit>
-    
     /**
      * 사용자 계정 삭제
      */

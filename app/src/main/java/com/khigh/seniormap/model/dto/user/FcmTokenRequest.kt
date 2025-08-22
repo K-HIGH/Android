@@ -1,4 +1,4 @@
-package com.khigh.seniormap.model.dto.auth
+package com.khigh.seniormap.model.dto.user
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

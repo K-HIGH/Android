@@ -37,9 +37,16 @@ class AuthViewModel @Inject constructor(
 
     private val _signingOut = MutableStateFlow(false)
     val isSigningOut: StateFlow<Boolean> = _signingOut.asStateFlow()
-    
+
+    private val _isUserRegistered = MutableStateFlow(false)
+    val isUserRegistered: StateFlow<Boolean> = _isUserRegistered.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    
+    // ViewModel 초기화 완료 상태
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
     
     // 인증 상태 관찰
     val authState = supabaseAuthRepository.observeAuthState()
@@ -61,6 +68,12 @@ class AuthViewModel @Inject constructor(
         checkAuthState()
         // 앱 시작 시 세션 복원 시도
         restoreSessionIfNeeded()
+        
+        // 초기화 완료 표시
+        viewModelScope.launch {
+            _isReady.value = true
+            Log.d(_tag, "AuthViewModel initialization completed")
+        }
     }
     
     /**
@@ -125,7 +138,8 @@ class AuthViewModel @Inject constructor(
 
     fun handleCallback(intent: Intent) {
         viewModelScope.launch {
-
+            Log.d(_tag, "handleCallback start: _signingIn.value: ${_signingIn.value}")
+            _signingIn.value = true
             supabaseAuthRepository.handleCallback(intent)
                 .onSuccess {
                     Log.d(_tag, "handleCallback: ${intent.data}")
@@ -150,26 +164,38 @@ class AuthViewModel @Inject constructor(
             
             val accessToken = supabaseAuthRepository.getAccessToken()
             Log.d(_tag, "handleCallback:login:accessToken: ${accessToken}")
+            Log.d(_tag, "accessToken before login: _signingIn.value: ${_signingIn.value}")
             if (accessToken != null) {
                 authRepository.login(UserLoginRequest(accessToken = accessToken))
-                .onSuccess {
-                    Log.d(_tag, "handleCallback:login: ${accessToken}")
+                .onSuccess { response ->
+                    Log.d(_tag, "handleCallback:login:response: ${response}, _signingIn.value: ${_signingIn.value}")
+                    Log.d(_tag, "handleCallback:login: ${accessToken}, _signingIn.value: ${_signingIn.value}")
+
+                    response.body()?.let { user ->
+                        Log.d(_tag, "handleCallback:login:user.user.isRegistered: ${user.user.isRegistered}, _signingIn.value: ${_signingIn.value}")
+                        _isUserRegistered.value = user.user.isRegistered
+                    }
+
+                    _signingIn.value = false
+                    Log.d(_tag, "handleCallback:login: _signingIn: ${_signingIn.value}")
                 }
                 .onFailure { error ->
                     _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
                     Log.e(_tag, "handleCallback:login: ${error.message}")
                     Log.e(_tag, "handleCallback:login: ${error.cause}")
+                    _signingIn.value = false
                 }
             } else {
                 _errorMessage.value = "액세스 토큰을 찾을 수 없습니다."
+                _signingIn.value = false
             }
-            _signingIn.value = false
         }
     }
 
-    fun onAuthResultHandled() {
-        _signingIn.value = false
-    }
+    // fun onAuthResultHandled() {
+    //     _signingIn.value = false
+    // }
+
     
     /**
      * 이메일/패스워드 로그인
@@ -359,24 +385,6 @@ data class AuthUiState(
     val isOAuthFlow: Boolean = false,
     val oAuthUrl: String? = null
 )
-
-/**
- * UserDto를 UserEntity로 변환하는 확장 함수
- */
-// private fun UserDto.toEntity(): UserEntity {
-//     return UserEntity(
-//         id = this.id,
-//         email = this.email,
-//         userName = this.userName,
-//         phone = this.phone,
-//         isCaregiver = this.isCaregiver,
-//         isHelper = this.isHelper,
-//         fcmToken = this.fcmToken,
-//         isAlert = this.isAlert,
-//         accessToken = null,
-//         refreshToken = null
-//     )
-// } 
 
 private fun parseFragmentParameters(fragment: String): Map<String, String> {
     return fragment.split('&').mapNotNull { part ->

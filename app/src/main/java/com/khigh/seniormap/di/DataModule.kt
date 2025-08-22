@@ -8,6 +8,8 @@ import com.khigh.seniormap.repository.SupabaseAuthRepository
 import com.khigh.seniormap.repository.SupabaseAuthRepositoryImpl
 import com.khigh.seniormap.repository.AuthRepository
 import com.khigh.seniormap.repository.AuthRepositoryImpl
+import com.khigh.seniormap.repository.UserRepository
+import com.khigh.seniormap.repository.UserRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -50,6 +52,15 @@ abstract class DataModule {
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
     
+    /**
+     * UserRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(
+        userRepositoryImpl: UserRepositoryImpl
+    ): UserRepository
+
     companion object {
         
         // ==================== DataStore Providers ====================

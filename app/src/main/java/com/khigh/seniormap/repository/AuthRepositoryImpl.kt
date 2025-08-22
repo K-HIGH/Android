@@ -5,12 +5,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.khigh.seniormap.model.dto.auth.*
-import com.khigh.seniormap.model.dto.ApiMessage
+import com.khigh.seniormap.model.dto.user.UserResponse
+import com.khigh.seniormap.repository.SupabaseAuthRepository
 import com.khigh.seniormap.model.entity.UserEntity
 import com.khigh.seniormap.network.api.AuthApi
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
+import retrofit2.Response
 
 /**
  * K-HIGH 서버 API Repository 구현체
@@ -21,17 +24,19 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val supabaseAuthRepository: SupabaseAuthRepository,
 ) : AuthRepository {
     
     companion object {
         private val SUPABASE_ACCESS_TOKEN_KEY = stringPreferencesKey("supabase_access_token")
         private const val TAG = "com.khigh.seniormap.repository.AuthRepositoryImpl"
+        private val USER_ENTITY_KEY = stringPreferencesKey("user_entity")
     }
     
     // ==================== Auth API ====================
     
-    override suspend fun login(request: UserLoginRequest): Result<ApiMessage> {
+    override suspend fun login(request: UserLoginRequest): Result<Response<UserResponse>> {
         return try {
             Log.d(TAG, "login: Attempting to login with Supabase token")
             
@@ -41,7 +46,7 @@ class AuthRepositoryImpl @Inject constructor(
                 // Supabase access_token을 캐싱
                 saveSupabaseAccessToken(request.accessToken)
                 Log.d(TAG, "login: Login successful, Supabase token cached")
-                Result.success(response.body()!!)
+                Result.success(response)
             } else {
                 Log.e(TAG, "login: Login failed - ${response.code()}: ${response.message()}")
                 Result.failure(Exception("K-HIGH 서버 로그인 실패: ${response.message()}"))
@@ -83,179 +88,41 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
     
-    // ==================== User API ====================
-    
-    override suspend fun getCurrentUser(): Result<UserLoginResponse> {
-        return try {
-            val token = getSupabaseAccessToken()
-            if (token.isNullOrEmpty()) {
-                Log.e(TAG, "getCurrentUser: No Supabase access token found")
-                return Result.failure(Exception("Supabase 액세스 토큰이 없습니다"))
-            }
-            
-            Log.d(TAG, "getCurrentUser: Fetching user info from K-HIGH server")
-            
-            val response = authApi.getCurrentUser("Bearer $token")
-            
-            if (response.isSuccessful) {
-                val userResponse = response.body()
-                if (userResponse != null) {
-                    Log.d(TAG, "getCurrentUser: User info fetched successfully")
-                    Result.success(userResponse)
-                } else {
-                    Log.e(TAG, "getCurrentUser: Empty response body")
-                    Result.failure(Exception("서버에서 사용자 정보를 받지 못했습니다"))
-                }
-            } else {
-                Log.e(TAG, "getCurrentUser: Failed - ${response.code()}: ${response.message()}")
-                Result.failure(Exception("사용자 정보 조회 실패: ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "getCurrentUser: Exception occurred", e)
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updateUserProfile(request: UserProfileUpdateRequest): Result<Unit> {
-        return try {
-            val token = getSupabaseAccessToken()
-            if (token.isNullOrEmpty()) {
-                Log.e(TAG, "updateUserProfile: No Supabase access token found")
-                return Result.failure(Exception("Supabase 액세스 토큰이 없습니다"))
-            }
-            
-            Log.d(TAG, "updateUserProfile: Updating user profile")
-            
-            val response = authApi.updateUserProfile("Bearer $token", request)
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "updateUserProfile: Profile updated successfully")
-                Result.success(Unit)
-            } else {
-                Log.e(TAG, "updateUserProfile: Failed - ${response.code()}: ${response.message()}")
-                Result.failure(Exception("프로필 업데이트 실패: ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "updateUserProfile: Exception occurred", e)
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updateFcmToken(request: FcmTokenRequest): Result<Unit> {
-        return try {
-            val token = getSupabaseAccessToken()
-            if (token.isNullOrEmpty()) {
-                Log.e(TAG, "updateFcmToken: No Supabase access token found")
-                return Result.failure(Exception("Supabase 액세스 토큰이 없습니다"))
-            }
-            
-            Log.d(TAG, "updateFcmToken: Updating FCM token")
-            
-            val response = authApi.updateFcmToken("Bearer $token", request)
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "updateFcmToken: FCM token updated successfully")
-                Result.success(Unit)
-            } else {
-                Log.e(TAG, "updateFcmToken: Failed - ${response.code()}: ${response.message()}")
-                Result.failure(Exception("FCM 토큰 업데이트 실패: ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "updateFcmToken: Exception occurred", e)
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updateAlertFlag(request: AlertFlagRequest): Result<Unit> {
-        return try {
-            val token = getSupabaseAccessToken()
-            if (token.isNullOrEmpty()) {
-                Log.e(TAG, "updateAlertFlag: No Supabase access token found")
-                return Result.failure(Exception("Supabase 액세스 토큰이 없습니다"))
-            }
-            
-            Log.d(TAG, "updateAlertFlag: Updating alert flag to ${request.isAlert}")
-            
-            val response = authApi.updateAlertFlag("Bearer $token", request)
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "updateAlertFlag: Alert flag updated successfully")
-                Result.success(Unit)
-            } else {
-                Log.e(TAG, "updateAlertFlag: Failed - ${response.code()}: ${response.message()}")
-                Result.failure(Exception("알림 설정 업데이트 실패: ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "updateAlertFlag: Exception occurred", e)
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun deleteUser(): Result<Unit> {
-        return try {
-            val token = getSupabaseAccessToken()
-            if (token.isNullOrEmpty()) {
-                Log.e(TAG, "deleteUser: No Supabase access token found")
-                return Result.failure(Exception("Supabase 액세스 토큰이 없습니다"))
-            }
-            
-            Log.d(TAG, "deleteUser: Deleting user account")
-            
-            val response = authApi.deleteUser("Bearer $token")
-            
-            if (response.isSuccessful) {
-                clearSupabaseAccessToken()
-                Log.d(TAG, "deleteUser: User account deleted successfully")
-                Result.success(Unit)
-            } else {
-                Log.e(TAG, "deleteUser: Failed - ${response.code()}: ${response.message()}")
-                Result.failure(Exception("계정 삭제 실패: ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "deleteUser: Exception occurred", e)
-            Result.failure(e)
-        }
-    }
-    
     // ==================== 통합 기능 ====================
     
     override suspend fun syncWithServer(
         supabaseAccessToken: String,
-        userId: String,
-        email: String
-    ): Result<UserEntity> {
+    ): Result<Unit> {
         return try {
             Log.d(TAG, "syncWithServer: Starting sync process")
             
-            // 1. K-HIGH 서버에 로그인 (Supabase 토큰 캐싱)
+            // K-HIGH 서버에 로그인 (Supabase 토큰 캐싱)
             val loginResult = login(UserLoginRequest(accessToken = supabaseAccessToken))
             if (loginResult.isFailure) {
                 Log.e(TAG, "syncWithServer: K-HIGH login failed")
                 return Result.failure(loginResult.exceptionOrNull() ?: Exception("K-HIGH 로그인 실패"))
             }
-            
-            // 2. 서버에서 사용자 정보 조회
-            val userInfoResult = getCurrentUser()
-            if (userInfoResult.isFailure) {
-                Log.e(TAG, "syncWithServer: Failed to get user info from K-HIGH")
-                return Result.failure(userInfoResult.exceptionOrNull() ?: Exception("사용자 정보 조회 실패"))
-            }
-            
-            // 3. 로컬 UserEntity 생성
-            val kHighUser = userInfoResult.getOrNull()!!
-            val userEntity = kHighUser.toUserEntity(userId, email)
-            
-            Log.d(TAG, "syncWithServer: Sync completed successfully")
-            Result.success(userEntity)
-            
+            Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "syncWithServer: Exception occurred", e)
             Result.failure(e)
         }
     }
     
+    override suspend fun getUserEntity(): UserEntity? {
+        val preferences = dataStore.data.first()
+        return preferences[USER_ENTITY_KEY]?.let { Json.decodeFromString<UserEntity>(it) }
+    }
+
+    override suspend fun saveUserEntity(userEntity: UserEntity) {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[USER_ENTITY_KEY] = Json.encodeToString(userEntity)
+            }
+        }
+    }
+
     // ==================== Private Helper Methods ====================
-    
     private suspend fun saveSupabaseAccessToken(token: String) {
         dataStore.updateData { preferences ->
             preferences.toMutablePreferences().apply {
