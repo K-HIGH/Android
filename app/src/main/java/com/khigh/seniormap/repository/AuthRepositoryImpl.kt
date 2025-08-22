@@ -5,12 +5,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.khigh.seniormap.model.dto.auth.*
-import com.khigh.seniormap.model.dto.ApiMessage
+import com.khigh.seniormap.repository.SupabaseAuthRepository
 import com.khigh.seniormap.model.entity.UserEntity
 import com.khigh.seniormap.network.api.AuthApi
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
+import retrofit2.Response
 
 /**
  * K-HIGH 서버 API Repository 구현체
@@ -21,17 +23,19 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val supabaseAuthRepository: SupabaseAuthRepository
 ) : AuthRepository {
     
     companion object {
         private val SUPABASE_ACCESS_TOKEN_KEY = stringPreferencesKey("supabase_access_token")
         private const val TAG = "com.khigh.seniormap.repository.AuthRepositoryImpl"
+        private val USER_ENTITY_KEY = stringPreferencesKey("user_entity")
     }
     
     // ==================== Auth API ====================
     
-    override suspend fun login(request: UserLoginRequest): Result<ApiMessage> {
+    override suspend fun login(request: UserLoginRequest): Result<Response<UserResponse>> {
         return try {
             Log.d(TAG, "login: Attempting to login with Supabase token")
             
@@ -41,7 +45,7 @@ class AuthRepositoryImpl @Inject constructor(
                 // Supabase access_token을 캐싱
                 saveSupabaseAccessToken(request.accessToken)
                 Log.d(TAG, "login: Login successful, Supabase token cached")
-                Result.success(response.body()!!)
+                Result.success(response)
             } else {
                 Log.e(TAG, "login: Login failed - ${response.code()}: ${response.message()}")
                 Result.failure(Exception("K-HIGH 서버 로그인 실패: ${response.message()}"))
@@ -85,7 +89,7 @@ class AuthRepositoryImpl @Inject constructor(
     
     // ==================== User API ====================
     
-    override suspend fun getCurrentUser(): Result<UserLoginResponse> {
+    override suspend fun getCurrentUser(): Result<UserResponse> {
         return try {
             val token = getSupabaseAccessToken()
             if (token.isNullOrEmpty()) {
@@ -101,6 +105,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val userResponse = response.body()
                 if (userResponse != null) {
                     Log.d(TAG, "getCurrentUser: User info fetched successfully")
+                    
                     Result.success(userResponse)
                 } else {
                     Log.e(TAG, "getCurrentUser: Empty response body")
@@ -242,10 +247,18 @@ class AuthRepositoryImpl @Inject constructor(
             }
             
             // 3. 로컬 UserEntity 생성
+            val accessToken = supabaseAuthRepository.getAccessToken()
+            val refreshToken = supabaseAuthRepository.getRefreshToken()
+
             val kHighUser = userInfoResult.getOrNull()!!
-            val userEntity = kHighUser.toUserEntity(userId, email)
+            val userEntity = kHighUser.toUserEntity(
+                userId, 
+                email, 
+                accessToken!!, 
+                refreshToken!!)
             
             Log.d(TAG, "syncWithServer: Sync completed successfully")
+            saveUserEntity(userEntity)
             Result.success(userEntity)
             
         } catch (e: Exception) {
@@ -254,8 +267,20 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
     
+    override suspend fun getUserEntity(): UserEntity? {
+        val preferences = dataStore.data.first()
+        return preferences[USER_ENTITY_KEY]?.let { Json.decodeFromString<UserEntity>(it) }
+    }
+
+    override suspend fun saveUserEntity(userEntity: UserEntity) {
+        dataStore.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[USER_ENTITY_KEY] = Json.encodeToString(userEntity)
+            }
+        }
+    }
+
     // ==================== Private Helper Methods ====================
-    
     private suspend fun saveSupabaseAccessToken(token: String) {
         dataStore.updateData { preferences ->
             preferences.toMutablePreferences().apply {

@@ -3,6 +3,7 @@ package com.khigh.seniormap.repository
 import com.khigh.seniormap.model.dto.auth.*
 import com.khigh.seniormap.model.entity.UserEntity
 import com.khigh.seniormap.model.dto.ApiMessage
+import retrofit2.Response
 
 /**
  * K-HIGH 서버 API Repository 인터페이스
@@ -18,7 +19,7 @@ interface AuthRepository {
      * K-HIGH 서버에 로그인
      * Supabase access_token을 전달하여 서버 세션 동기화
      */
-    suspend fun login(request: UserLoginRequest): Result<ApiMessage>
+    suspend fun login(request: UserLoginRequest): Result<Response<UserResponse>>
     
     /**
      * K-HIGH 서버에서 로그아웃
@@ -30,7 +31,7 @@ interface AuthRepository {
     /**
      * K-HIGH 서버에서 현재 사용자 정보 조회
      */
-    suspend fun getCurrentUser(): Result<UserLoginResponse>
+    suspend fun getCurrentUser(): Result<UserResponse>
     
     /**
      * K-HIGH 서버에 사용자 프로필 업데이트
@@ -61,4 +62,14 @@ interface AuthRepository {
      * 3. 로컬 UserEntity 업데이트
      */
     suspend fun syncWithServer(supabaseAccessToken: String, userId: String, email: String): Result<UserEntity>
+
+    /**
+     * 로컬 UserEntity 조회
+     */
+    suspend fun getUserEntity(): UserEntity?
+
+    /**
+     * 로컴 UserEntity 저장
+     */
+    suspend fun saveUserEntity(userEntity: UserEntity)
 } 
