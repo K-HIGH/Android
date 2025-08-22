@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khigh.seniormap.viewmodel.UserViewModel
+import com.khigh.seniormap.model.dto.user.UserProfileUpdateRequest
 
 /**
  * 역할 선택 화면 (부모/자녀)
@@ -24,8 +26,9 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun RoleSelectionScreen(
-    onRoleSelected: (Boolean) -> Unit, // true: 보호자, false: 피보호인
-    modifier: Modifier = Modifier
+    onRoleSelected: (Boolean, Boolean) -> Unit, // (보호자 여부, 도우미 여부)
+    modifier: Modifier = Modifier,
+    userViewModel: UserViewModel
 ) {
     // 무드보드 컬러 팔레트
     val primaryGreen = Color(0xFF98D5B3)
@@ -33,6 +36,11 @@ fun RoleSelectionScreen(
     val backgroundColor = Color(0xFFF5F5E5)
     val textPrimary = Color(0xFF1C1C0D)
     val textSecondary = Color(0xFF9E9E47)
+
+    fun updateUserProfile(isCaregiver: Boolean, isHelper: Boolean) {
+        userViewModel.updateUserProfile(UserProfileUpdateRequest(isCaregiver = isCaregiver, isHelper = isHelper))
+        onRoleSelected(isCaregiver, isHelper)
+    }
 
     Column(
         modifier = modifier
@@ -89,7 +97,9 @@ fun RoleSelectionScreen(
                 description = "회원님의 안전을\n실시간으로 확인할 수 있어요",
                 icon = Icons.Default.Person,
                 backgroundColor = primaryGreen,
-                onClick = { onRoleSelected(true) }
+                onClick = { 
+                    updateUserProfile(true, false)
+                }
             )
             
             // 피보호인 선택 카드
@@ -99,7 +109,21 @@ fun RoleSelectionScreen(
                 description = "안전한 외출과 응급상황 시\n빠른 도움을 받을 수 있어요",
                 icon = Icons.Default.AccountCircle,
                 backgroundColor = accentBlue,
-                onClick = { onRoleSelected(false) }
+                onClick = { 
+                    updateUserProfile(false, false)
+                }
+            )
+
+            // 도우미 선택 카드
+            RoleSelectionCard(
+                title = "도우미",
+                subtitle = "도우미",
+                description = "도우미와 함께 안전하게 케어를 받을 수 있어요",
+                icon = Icons.Default.Person,
+                backgroundColor = Color(0xFFE8B3C7),
+                onClick = { 
+                    updateUserProfile(false, true)
+                }
             )
         }
         

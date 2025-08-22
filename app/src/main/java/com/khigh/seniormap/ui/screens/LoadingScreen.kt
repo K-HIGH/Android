@@ -13,6 +13,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.khigh.seniormap.model.entity.UserEntity
+import com.khigh.seniormap.viewmodel.UserViewModel
+
 
 /**
  * 로딩 화면 컴포넌트
@@ -29,7 +31,8 @@ fun LoadingScreen(
     onNavigateToRoleSelection: () -> Unit = {},
     modifier: Modifier = Modifier,
     message: String = "로딩 중...",
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
 
     val _tag = "com.khigh.seniormap.LoadingScreen"
