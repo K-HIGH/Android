@@ -56,7 +56,7 @@ class UserRepositoryImpl @Inject constructor(
 
             return Result.success(response)
         } catch (e: Exception) {
-            Log.e(TAG, "getUserInfo: Exception occurred")
+            Log.e(TAG, "getUserInfo: Exception occurred, ${e.message}")
             return Result.failure(e)
         } finally {
             Log.d(TAG, "getUserInfo: Completed")
@@ -90,7 +90,7 @@ class UserRepositoryImpl @Inject constructor(
 
             return Result.success(response)
         } catch (e: Exception) {
-            Log.e(TAG, "updateUserProfile: Exception occurred")
+            Log.e(TAG, "updateUserProfile: Exception occurred, ${e.message}")
             return Result.failure(e)
         } finally {
             Log.d(TAG, "updateUserProfile: Completed")
@@ -124,7 +124,7 @@ class UserRepositoryImpl @Inject constructor(
 
             return Result.success(response)
         } catch (e: Exception) {
-            Log.e(TAG, "updateFcmToken: Exception occurred")
+            Log.e(TAG, "updateFcmToken: Exception occurred, ${e.message}")
             return Result.failure(e)
         } finally {
             Log.d(TAG, "updateFcmToken: Completed")
@@ -161,7 +161,7 @@ class UserRepositoryImpl @Inject constructor(
 
             return Result.success(response)
         } catch (e: Exception) {
-            Log.e(TAG, "updateAlertFlag: Exception occurred")
+            Log.e(TAG, "updateAlertFlag: Exception occurred, ${e.message}")
             return Result.failure(e)
         } finally {
             Log.d(TAG, "updateAlertFlag: Completed")
@@ -189,7 +189,7 @@ class UserRepositoryImpl @Inject constructor(
 
             return Result.success(response)
         } catch (e: Exception) {
-            Log.e(TAG, "deleteUser: Exception occurred")
+            Log.e(TAG, "deleteUser: Exception occurred, ${e.message}")
             return Result.failure(e)
         } finally {
             Log.d(TAG, "deleteUser: Completed")
