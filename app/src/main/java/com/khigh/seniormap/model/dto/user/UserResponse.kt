@@ -1,25 +1,28 @@
 package com.khigh.seniormap.model.dto.user
 
 import com.khigh.seniormap.model.entity.UserEntity
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserResponse(
     val user: UserDto,
-    val profile: UserProfileDto,
-    val alert: UserAlertDto
+    @SerialName("user_profile")
+    val userProfile: UserProfileDto,
+    @SerialName("user_alert")
+    val userAlert: UserAlertDto
 )
 
 fun UserResponse.toEntity(): UserEntity {
     return UserEntity(
         id = user.userId,
         isRegistered = user.isRegistered,
-        userName = profile.userName,
-        phone = profile.phone,
-        isCaregiver = profile.isCaregiver,
-        isHelper = profile.isHelper,
-        fcmToken = alert.fcmToken,
-        isAlert = alert.isAlert,
+        userName = userProfile.userName,
+        phone = userProfile.phone,
+        isCaregiver = userProfile.isCaregiver,
+        isHelper = userProfile.isHelper,
+        fcmToken = userAlert.fcmToken,
+        isAlert = userAlert.isAlert,
         lastSyncTime = System.currentTimeMillis()
     )
 }
