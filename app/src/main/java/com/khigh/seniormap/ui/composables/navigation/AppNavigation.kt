@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.khigh.seniormap.ui.screens.HomeScreen
 import com.khigh.seniormap.ui.screens.LoadingScreen
 import com.khigh.seniormap.ui.screens.LoginScreen
+import com.khigh.seniormap.ui.screens.guardian.GuardianHomeScreen
 import com.khigh.seniormap.ui.screens.RoleSelectionScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,7 +65,7 @@ fun AppNavigation(
         isUserRegistered -> "role_selection"
         !isAuthenticated -> "login"
         isAuthenticated && !isUserRegistered -> "role_selection"
-        isAuthenticated && isUserRegistered -> "home"
+        isAuthenticated && isUserRegistered -> "guardian_home"
         else -> "login"
     }
     
@@ -87,8 +88,8 @@ fun AppNavigation(
             }
             composable("loading") {
                 LoadingScreen(
-                    onNavigateToHome = {
-                        navController.navigate("home") {
+                    onNavigateToGuardianHome = {
+                        navController.navigate("guardian_home") {
                             popUpTo("loading") { inclusive = true }
                         }
                     },
@@ -105,15 +106,33 @@ fun AppNavigation(
                 RoleSelectionScreen(
                     onRoleSelected = { isCaregiver, isHelper ->
                         // 홈 화면으로 이동
-                        navController.navigate("home") {
-                            popUpTo("role_selection") { inclusive = true }
+                        Log.d("com.khigh.seniormap", "[RoleSelectionScreen] isCaregiver: $isCaregiver, isHelper: $isHelper")
+                        if (isCaregiver || isHelper) {
+                            navController.navigate("guardian_home") {
+                                popUpTo("role_selection") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("home") {
+                                popUpTo("role_selection") { inclusive = true }
+                            }
                         }
                     },
                     userViewModel = userViewModel
                 )
             }
             
-            // 홈 화면
+            // 보호인 홈 화면
+            composable("guardian_home") {
+                GuardianHomeScreen(
+                    onNavigateToLogin = {
+                        navController.navigate("login") {
+                            popUpTo("guardian_home") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            // 기존 홈 화면 (필요시 유지)
             composable("home") {
                 HomeScreen(
                     onNavigateToLogin = {

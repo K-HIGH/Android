@@ -2,10 +2,12 @@ package com.khigh.seniormap.model.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * 사용자 정보 Entity (Room Database)
  */
+@Serializable
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey
