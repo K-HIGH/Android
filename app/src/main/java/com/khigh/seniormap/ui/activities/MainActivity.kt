@@ -38,10 +38,11 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
-    private var authViewModel: AuthViewModel? = null
-
     @Inject
     lateinit var supabaseClient: SupabaseClient
+    
+    // AuthViewModel 참조를 저장하기 위한 변수
+    private var authViewModelRef: AuthViewModel? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +66,24 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // 새로운 인텐트 처리 (앱이 이미 실행 중일 때)
+        
+        // 브라우저에서 돌아올 때 직접 AuthViewModel을 통해 처리
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            if (uri?.scheme == "com.khigh.seniormap" && uri.host == "oauth") {
+                Log.d("com.khigh.seniormap", "[MainActivity] onNewIntent: OAuth callback detected")
+                authViewModelRef?.let { authViewModel ->
+                    Log.d("com.khigh.seniormap", "[MainActivity] onNewIntent: Calling handleCallback directly")
+                    authViewModel.handleCallback(intent)
+                } ?: run {
+                    Log.d("com.khigh.seniormap", "[MainActivity] onNewIntent: AuthViewModel not available, fallback to regular handling")
+                    handleIntent(intent)
+                }
+                return
+            }
+        }
+        
+        // 일반적인 인텐트 처리
         handleIntent(intent)
     }
     
@@ -78,12 +96,13 @@ class MainActivity : ComponentActivity() {
         Log.d("com.khigh.seniormap", "[MainActivity] handleIntent - action: $action")
         
         if (action == Intent.ACTION_VIEW) {
+            
             handleDeepLink(intent)
         }
     }
     
     /**
-     * OAuth 딥링크 처리
+     * OAuth 딥링크 처리 (AuthViewModel이 없을 때)
      */
     private fun handleDeepLink(intent: Intent) {
         Log.d("com.khigh.seniormap", "[MainActivity] handleDeepLink: $intent")
@@ -91,8 +110,27 @@ class MainActivity : ComponentActivity() {
 
         when {
             uri?.scheme == "com.khigh.seniormap" && uri.host == "oauth" -> {
-                Log.d("com.khigh.seniormap", "[MainActivity] OAuth callback detected")
-                authViewModel?.handleCallback(intent)
+                Log.d("com.khigh.seniormap", "[MainActivity] OAuth callback detected - but AuthViewModel not available yet")
+                // AuthViewModel이 아직 사용 가능하지 않으므로, Compose에서 처리하도록 Intent 저장
+                setIntent(intent)
+            }
+            else -> {
+                Log.d("com.khigh.seniormap", "[MainActivity] Unknown deep link: $intent")
+            }
+        }
+    }
+    
+    /**
+     * AuthViewModel을 사용한 딥링크 처리
+     */
+    private fun handleDeepLinkWithViewModel(intent: Intent, authViewModel: AuthViewModel) {
+        Log.d("com.khigh.seniormap", "[MainActivity] handleDeepLinkWithViewModel: $intent")
+        val uri = intent.data
+
+        when {
+            uri?.scheme == "com.khigh.seniormap" && uri.host == "oauth" -> {
+                Log.d("com.khigh.seniormap", "[MainActivity] OAuth callback detected - calling handleCallback")
+                authViewModel.handleCallback(intent)
             }
             else -> {
                 Log.d("com.khigh.seniormap", "[MainActivity] Unknown deep link: $intent")
@@ -102,27 +140,43 @@ class MainActivity : ComponentActivity() {
     
     @Composable
     private fun MainContent() {
-        val viewModel: AuthViewModel = hiltViewModel()
+        val authViewModel: AuthViewModel = hiltViewModel()
         
-        // AuthViewModel 참조 저장
-        LaunchedEffect(viewModel) {
-            authViewModel = viewModel
+        // ViewModel 준비 상태 확인 및 참조 저장
+        val isViewModelReady by authViewModel.isReady.collectAsState()
+        
+        // AuthViewModel 참조 저장 (onNewIntent에서 사용하기 위해)
+        LaunchedEffect(authViewModel, isViewModelReady) {
+            if (isViewModelReady) {
+                authViewModelRef = authViewModel
+                Log.d("com.khigh.seniormap", "[MainActivity] AuthViewModel ready and reference saved")
+                
+                // 초기 Intent 처리 (onCreate에서 들어온 딥링크)
+                intent?.let { currentIntent ->
+                    if (currentIntent.action == Intent.ACTION_VIEW) {
+                        handleDeepLinkWithViewModel(currentIntent, authViewModel)
+                    }
+                }
+            } else {
+                Log.d("com.khigh.seniormap", "[MainActivity] AuthViewModel not ready yet")
+            }
         }
         
         // 인증 관련 상태 관찰
-        val authState by viewModel.authState.collectAsState()
-        val isSigningIn by viewModel.isSigningIn.collectAsState()
-        val errorMessage by viewModel.errorMessage.collectAsState()
+        val authState by authViewModel.authState.collectAsState()
+        val isSigningIn by authViewModel.isSigningIn.collectAsState()
+        val errorMessage by authViewModel.errorMessage.collectAsState()
         
         Scaffold(
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             AppNavigation(
+                authViewModel = authViewModel,
                 modifier = Modifier.padding(innerPadding),
                 isAuthenticated = authState != SessionStatus.NotAuthenticated(),
                 isSigningIn = isSigningIn,
                 errorMessage = errorMessage,
-                onClearError = { viewModel.clearErrorMessage() }
+                onClearError = { authViewModel.clearErrorMessage() }
             )
         }
     }
