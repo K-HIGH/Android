@@ -27,7 +27,7 @@ import com.khigh.seniormap.viewmodel.UserViewModel
  */
 @Composable
 fun LoadingScreen(
-    onNavigateToHome: () -> Unit = {},
+    onNavigateToGuardianHome: () -> Unit = {},
     onNavigateToRoleSelection: () -> Unit = {},
     modifier: Modifier = Modifier,
     message: String = "로딩 중...",
@@ -51,7 +51,7 @@ fun LoadingScreen(
                 // 역할 선택이 필요하지 않은 경우 (기존 사용자)
                 true -> {
                     Log.d(_tag, "[LaunchedEffect] No need role selection, navigating to home")
-                    onNavigateToHome()
+                    onNavigateToGuardianHome()
                 }
                 // 역할 선택이 필요한 경우 (신규 사용자)
                 false -> {

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khigh.seniormap.viewmodel.UserViewModel
 import com.khigh.seniormap.model.dto.user.UserProfileUpdateRequest
+import android.util.Log
 
 /**
  * 역할 선택 화면 (부모/자녀)
@@ -38,6 +39,7 @@ fun RoleSelectionScreen(
     val textSecondary = Color(0xFF9E9E47)
 
     fun updateUserProfile(isCaregiver: Boolean, isHelper: Boolean) {
+        Log.d("com.khigh.seniormap", "[RoleSelectionScreen] updateUserProfile: isCaregiver: $isCaregiver, isHelper: $isHelper")
         userViewModel.updateUserProfile(UserProfileUpdateRequest(isCaregiver = isCaregiver, isHelper = isHelper))
         onRoleSelected(isCaregiver, isHelper)
     }

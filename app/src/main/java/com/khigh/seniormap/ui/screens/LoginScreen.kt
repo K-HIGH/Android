@@ -131,10 +131,6 @@ fun LoginScreen(
                     onGoogleLogin = {
                         Log.d(_tag, "[LoginScreen] Google login clicked")
                         authViewModel.loginWithOAuth(Google)
-                    },
-                    onTemporaryGuardianHome = {
-                        Log.d("com.khigh.seniormap", "[LoginScreen] Temporary guardian home clicked")
-                        onNavigateToHome()
                     }
                 )
             }
@@ -174,7 +170,6 @@ fun LoginScreen(
 private fun LoginButtonsSection(
     onKakaoLogin: () -> Unit,
     onGoogleLogin: () -> Unit,
-    onTemporaryGuardianHome: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -224,19 +219,6 @@ private fun LoginButtonsSection(
                 text = "Google로 로그인",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium
-            )
-        }
-        
-        // 임시 보호인 홈 이동 버튼
-        Spacer(modifier = Modifier.height(24.dp))
-        TextButton(
-            onClick = onTemporaryGuardianHome,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "(임시) 보호인 홈 넘어가기",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
             )
         }
     }

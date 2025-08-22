@@ -88,7 +88,7 @@ fun AppNavigation(
             }
             composable("loading") {
                 LoadingScreen(
-                    onNavigateToHome = {
+                    onNavigateToGuardianHome = {
                         navController.navigate("guardian_home") {
                             popUpTo("loading") { inclusive = true }
                         }
@@ -106,8 +106,15 @@ fun AppNavigation(
                 RoleSelectionScreen(
                     onRoleSelected = { isCaregiver, isHelper ->
                         // 홈 화면으로 이동
-                        navController.navigate("home") {
-                            popUpTo("role_selection") { inclusive = true }
+                        Log.d("com.khigh.seniormap", "[RoleSelectionScreen] isCaregiver: $isCaregiver, isHelper: $isHelper")
+                        if (isCaregiver || isHelper) {
+                            navController.navigate("guardian_home") {
+                                popUpTo("role_selection") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("home") {
+                                popUpTo("role_selection") { inclusive = true }
+                            }
                         }
                     },
                     userViewModel = userViewModel
@@ -124,30 +131,6 @@ fun AppNavigation(
                     }
                 )
             }
-            
-            // 역할 선택 화면
-            composable("role_selection") {
-                RoleSelectionScreen(
-                    onRoleSelected = { isCaregiver, isHelper ->
-                        // 홈 화면으로 이동
-                        navController.navigate("home") {
-                            popUpTo("role_selection") { inclusive = true }
-                        }
-                    },
-                    userViewModel = userViewModel
-                )
-            }
-            
-                        composable("guardian_home") {
-                GuardianHomeScreen(
-                    onNavigateToLogin = {
-                        navController.navigate("login") {
-                            popUpTo("guardian_home") { inclusive = true }
-                        }
-                    }
-                )
-            }
-            
             
             // 기존 홈 화면 (필요시 유지)
             composable("home") {
