@@ -1,5 +1,6 @@
 package com.khigh.seniormap.model.dto.supabaseauth
 
+import com.khigh.seniormap.model.dto.auth.UserDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

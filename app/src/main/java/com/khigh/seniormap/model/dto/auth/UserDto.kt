@@ -1,4 +1,4 @@
-package com.khigh.seniormap.model.dto.supabaseauth
+package com.khigh.seniormap.model.dto.auth
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -20,8 +20,10 @@ data class UserDto(
     val oauthId: String?,
     @SerialName("oauth_token")
     val oauthToken: String?,
+    @SerialName("is_registered")
+    val isRegistered: Boolean = false,
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")
     val updatedAt: String? = null
-) 
+)
