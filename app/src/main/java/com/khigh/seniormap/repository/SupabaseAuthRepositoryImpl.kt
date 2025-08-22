@@ -63,11 +63,13 @@ class SupabaseAuthRepositoryImpl @Inject constructor(
         return try {
             val session = supabaseClient.auth.refreshCurrentSession()
             val user = supabaseClient.auth.currentUserOrNull() 
-            
             // val userDto = user?.toUserDto()
-            
+
             if (user != null) {
                 saveUserSessionLocally(user)
+
+                val accessToken = supabaseClient.auth.currentAccessTokenOrNull() ?: ""
+                saveAccessToken(accessToken)
                 Result.success(user)
             } else {
                 Result.failure(Exception("세션 갱신 실패"))

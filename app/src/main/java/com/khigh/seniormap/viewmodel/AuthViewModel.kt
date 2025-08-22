@@ -83,11 +83,12 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 Log.d(_tag, "Attempting session restore on app start")
-                
-                val localUser = supabaseAuthRepository.getLocalUser()
+                refreshSession()
+                // val localUser = supabaseAuthRepository.getLocalUser()
                 val accessToken = supabaseAuthRepository.getAccessToken()
+                val refreshToken = supabaseAuthRepository.getRefreshToken()
                 
-                if (localUser != null && !accessToken.isNullOrEmpty()) {
+                if (!accessToken.isNullOrEmpty()) {
                     Log.d(_tag, "Local session found, attempting to restore")
                     
                     // 현재 사용자 정보 확인
@@ -131,8 +132,6 @@ class AuthViewModel @Inject constructor(
                     _errorMessage.value = error.message ?: "OAuth 로그인에 실패했습니다."
                     _signingIn.value = false
                 }
-            
-            
         }
     }
 
@@ -230,13 +229,20 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             supabaseAuthRepository.refreshSession()
                 .onSuccess { user ->
-                    // val userEntity = user.toEntity()
-                    // supabaseAuthRepository.saveUserLocally(userEntity)
-                    
-                    // _uiState.value = _uiState.value.copy(
-                    //     isLoggedIn = true,
-                    //     user = userEntity
-                    // )
+                    Log.d(_tag, "refreshSession: user: ${user}")
+                    val accessToken = supabaseAuthRepository.getAccessToken()
+                    Log.d(_tag, "refreshSession: accessToken: ${accessToken}")
+                    if (accessToken != null) {
+                        authRepository.login(UserLoginRequest(accessToken = accessToken))
+                            .onSuccess { response ->
+                                Log.d(_tag, "refreshSession:login:response: ${response}")
+                            }
+                            .onFailure { error ->
+                                Log.e(_tag, "refreshSession:login: ${error.message}")
+                            }
+                    } else {
+                        Log.e(_tag, "refreshSession: accessToken is null")
+                    }
                 }
                 .onFailure { error ->
                     // 세션 갱신 실패 시 로그아웃 처리
