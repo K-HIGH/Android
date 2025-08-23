@@ -22,7 +22,8 @@ import com.khigh.seniormap.ui.screens.guardian.components.*
 fun GuardianHomeScreen(
     modifier: Modifier = Modifier,
     onNavigateToLogin: () -> Unit = {},
-    onNavigateToEdit: (GuardianData) -> Unit = {}
+    onNavigateToEdit: (GuardianData) -> Unit = {},
+    onNavigateToAdd: () -> Unit = {} // 추가된 콜백
 ) {
     // 수정 모드 상태 추가
     var isEditMode by remember { mutableStateOf(false) }
@@ -70,7 +71,7 @@ fun GuardianHomeScreen(
                     isEditMode = !isEditMode // 수정 모드 토글
                 },
                 onAddClick = {
-                    // TODO: 피보호인 추가 화면으로 이동
+                    onNavigateToAdd() // 피보호인 추가 화면으로 이동
                 }
             )
         },

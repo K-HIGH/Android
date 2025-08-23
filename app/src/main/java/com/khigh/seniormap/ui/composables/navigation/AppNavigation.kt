@@ -17,6 +17,7 @@ import com.khigh.seniormap.ui.screens.LoadingScreen
 import com.khigh.seniormap.ui.screens.LoginScreen
 import com.khigh.seniormap.ui.screens.guardian.GuardianHomeScreen
 import com.khigh.seniormap.ui.screens.guardian.EditGuardianScreen
+import com.khigh.seniormap.ui.screens.guardian.AddProtectedPersonScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -85,6 +86,23 @@ fun AppNavigation(
                         navController.navigate("edit_guardian/${guardianData.id}") {
                             // 뒤로 가기 시 홈 화면으로 돌아감
                         }
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate("add_protected_person")
+                    }
+                )
+            }
+            
+            // 피보호인 추가 화면
+            composable("add_protected_person") {
+                AddProtectedPersonScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onSave = { protectedPersonData ->
+                        // TODO: 실제로는 ViewModel을 통해 데이터를 저장해야 함
+                        Log.d("AppNavigation", "Protected person added: $protectedPersonData")
+                        navController.popBackStack()
                     }
                 )
             }
