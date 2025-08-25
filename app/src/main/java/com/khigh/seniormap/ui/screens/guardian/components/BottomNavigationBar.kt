@@ -3,11 +3,11 @@ package com.khigh.seniormap.ui.screens.guardian.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -63,7 +63,7 @@ fun BottomNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (selectedTab == 1) Icons.Filled.Search else Icons.Outlined.Search,
+                    imageVector = if (selectedTab == 1) Icons.Filled.LocationOn else Icons.Outlined.LocationOn,
                     contentDescription = "지도"
                 ) 
             },
@@ -89,7 +89,7 @@ fun BottomNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (selectedTab == 2) Icons.Filled.List else Icons.Outlined.List,
+                    imageVector = if (selectedTab == 2) Icons.Filled.Settings else Icons.Outlined.Settings,
                     contentDescription = "설정"
                 ) 
             },

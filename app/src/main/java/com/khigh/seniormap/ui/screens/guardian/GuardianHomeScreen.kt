@@ -27,32 +27,52 @@ fun GuardianHomeScreen(
 ) {
     // 수정 모드 상태 추가
     var isEditMode by remember { mutableStateOf(false) }
-    // 임시 데이터 - 실제로는 ViewModel에서 가져올 데이터
+    // 임시 데이터 - 실제로는 ViewModel에서 가져올 데이터 (위치 정보 포함)
     val guardians = remember {
         listOf(
             GuardianData(
                 id = "1",
                 name = "김할자",
                 location = "집",
-                isAtHome = true
+                isAtHome = true,
+                homeAddress = "서울특별시 강남구 테헤란로 123",
+                homeLatitude = 37.5665,
+                homeLongitude = 126.9780,
+                currentLatitude = 37.5665,
+                currentLongitude = 126.9780
             ),
             GuardianData(
                 id = "2", 
                 name = "송진호",
                 location = "마을",
-                isAtHome = false
+                isAtHome = false,
+                homeAddress = "서울특별시 서초구 서초대로 456",
+                homeLatitude = 37.5013,
+                homeLongitude = 127.0246,
+                currentLatitude = 37.5020,
+                currentLongitude = 127.0250
             ),
             GuardianData(
                 id = "3",
                 name = "나문희", 
                 location = "집",
-                isAtHome = true
+                isAtHome = true,
+                homeAddress = "서울특별시 마포구 와우산로 789",
+                homeLatitude = 37.5519,
+                homeLongitude = 126.9251,
+                currentLatitude = 37.5519,
+                currentLongitude = 126.9251
             ),
             GuardianData(
                 id = "4",
                 name = "최불암",
                 location = "마을",
-                isAtHome = false
+                isAtHome = false,
+                homeAddress = "서울특별시 종로구 종로 101",
+                homeLatitude = 37.5736,
+                homeLongitude = 126.9787,
+                currentLatitude = 37.5750,
+                currentLongitude = 126.9800
             )
         )
     }
@@ -113,16 +133,11 @@ fun GuardianHomeScreen(
                     )
                 }
                 1 -> {
-                    // 지도 탭 - 지도 화면 (임시)
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        Text(
-                            text = "지도 화면 (구현 예정)",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+                    // 지도 탭 - 지도 화면
+                    MapScreen(
+                        guardians = guardians,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
                 2 -> {
                     // 설정 탭 - 설정 화면 (임시)
