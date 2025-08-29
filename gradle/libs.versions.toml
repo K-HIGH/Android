@@ -36,6 +36,9 @@ room = "2.6.1"
 # DataStore
 datastore = "1.1.1"
 
+# Coil
+coil = "2.5.0"
+
 # Supabase
 supabase-bom = "3.2.2"
 ktor = "3.2.2"
@@ -86,6 +89,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 
 # DataStore
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Coil
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 # Supabase
 supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase-bom" }

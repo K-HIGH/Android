@@ -3,12 +3,9 @@ package com.khigh.seniormap.ui.screens
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,179 +13,117 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.khigh.seniormap.ui.composables.*
+import com.khigh.seniormap.ui.model.Person
+import com.khigh.seniormap.ui.model.PersonStatus
 import com.khigh.seniormap.viewmodel.AuthViewModel
-import io.github.jan.supabase.auth.status.SessionStatus
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
  * 홈 화면 컴포넌트
  * 
- * SeniorMap 앱의 메인 홈 화면을 담당하며,
- * 사용자가 로그인한 후 표시되는 메인 대시보드입니다.
- * AuthViewModel을 통해 로그아웃 기능을 제공합니다.
- * 
- * @param onNavigateToLogin 로그인 화면으로 이동하는 콜백 (로그아웃)
- * @param modifier 레이아웃 수정자
- * @param authViewModel 인증 관련 ViewModel (Hilt를 통해 주입)
+ * '나의 부모님' 목록을 표시하는 메인 홈 화면입니다.
+ * 각 부모님을 클릭하면 프로필 화면으로 이동할 수 있습니다.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToLogin: () -> Unit = {},
+    onNavigateToProfile: (Person) -> Unit = {},
+    onNavigateToAddPerson: () -> Unit = {},
+    onNavigate: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel
 ) {
-    Log.d("com.khigh.seniormap", "[HomeScreen] onNavigateToLogin: $onNavigateToLogin")
+    Log.d("com.khigh.seniormap", "[HomeScreen] HomeScreen composable started")
     
-    val context = LocalContext.current
-    val uiState by authViewModel.uiState.collectAsState()
-    val isSigningIn by authViewModel.isSigningIn.collectAsState()
-    val isSigningOut by authViewModel.isSigningOut.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
     val authState by authViewModel.authState.collectAsState()
-    val currentUser by authViewModel.currentUser.collectAsState()
     
     // 인증 상태가 false가 되면 로그인 화면으로 이동
     LaunchedEffect(authState) {
-        if (authState is SessionStatus.NotAuthenticated) {
+        if (authState is io.github.jan.supabase.auth.status.SessionStatus.NotAuthenticated) {
             Log.d("com.khigh.seniormap", "[HomeScreen] User logged out, navigating to login")
             onNavigateToLogin()
         }
     }
     
-    // 에러 메시지 처리
-    errorMessage?.let { message ->
-        LaunchedEffect(message) {
-            Log.e("com.khigh.seniormap", "[HomeScreen] Error: $message")
-            // TODO: 스낵바나 다이얼로그로 에러 표시
-        }
+    // 샘플 데이터 (실제로는 ViewModel에서 가져와야 함)
+    val sampleParents = remember {
+        listOf(
+            Person(
+                id = "1",
+                name = "김혜자",
+                status = PersonStatus.HOME,
+                age = 68,
+                relationship = "어머니"
+            ),
+            Person(
+                id = "2",
+                name = "송강호",
+                status = PersonStatus.OUTING,
+                age = 72,
+                relationship = "아버지"
+            ),
+            Person(
+                id = "3",
+                name = "나문희",
+                status = PersonStatus.HOME,
+                age = 65,
+                relationship = "어머니"
+            ),
+            Person(
+                id = "4",
+                name = "최불암",
+                status = PersonStatus.PENDING,
+                age = 70,
+                relationship = "아버지"
+            )
+        )
     }
     
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(32.dp)
+            modifier = modifier
+                .fillMaxSize()
+                .padding(bottom = 90.dp) // 하단 네비게이션 바 높이만큼 패딩
         ) {
-            // 홈 아이콘
-            Icon(
-                imageVector = Icons.Default.Home,
-                contentDescription = "홈",
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary
+            // 헤더
+            HomeHeader(
+                onAddPerson = onNavigateToAddPerson
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // 화면 제목
-            Text(
-                text = "홈 화면",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+            // 부모님 목록
+            ParentsList(
+                parents = sampleParents,
+                onPersonClick = onNavigateToProfile
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 환영 메시지
-            Text(
-                text = "SeniorMap에 오신 것을 환영합니다!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+        }
+        
+        // 하단 네비게이션 바를 화면 하단에 고정
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            BottomNavigationBar(
+                currentRoute = "home",
+                onNavigate = onNavigate
             )
-            
-            // 사용자 정보 표시 (있는 경우)
-            currentUser?.let { user ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "로그인된 사용자",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "ID: ${user.id}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // 로그아웃 버튼
-            if (isSigningOut) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                OutlinedButton(
-                    onClick = {
-                        Log.d("com.khigh.seniormap", "[HomeScreen] Logout button clicked")
-                        authViewModel.logout()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "로그아웃",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "로그아웃",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-            
-
-            
-            // 에러 메시지 표시
-            errorMessage?.let { message ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                
-                // 에러 메시지 자동 클리어 (5초 후)
-                LaunchedEffect(message) {
-                    kotlinx.coroutines.delay(5000)
-                    authViewModel.clearErrorMessage()
-                }
-            }
         }
     }
+}
+
+/**
+ * Preview 함수 - UI 확인용
+ */
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun HomeScreenPreview() {
+    HomeScreen(
+        onNavigateToLogin = {},
+        onNavigateToProfile = {},
+        onNavigateToAddPerson = {},
+        onNavigate = {}
+    )
 } 
