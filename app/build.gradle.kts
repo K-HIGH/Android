@@ -36,6 +36,11 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${properties.getProperty("SUPABASE_URL")}\"")
         buildConfigField("String", "BASE_URL", "\"${properties.getProperty("BASE_URL")}\"")
         buildConfigField("String", "APP_VERSION", "\"${properties.getProperty("APP_VERSION")}\"")
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${properties.getProperty("KAKAO_NATIVE_APP_KEY")}\"")
+        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties.getProperty("KAKAO_REST_API_KEY")}\"")
+        
+        // AndroidManifest.xml에서 사용할 수 있도록 manifestPlaceholders 설정
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = properties.getProperty("KAKAO_NATIVE_APP_KEY", "")
     }
 
     buildTypes {
@@ -81,6 +86,7 @@ dependencies {
 
     // Hilt - 의존성 주입
     implementation(libs.hilt.android)
+    implementation(libs.play.services.tasks)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
@@ -140,4 +146,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // KakaoMaps SDK v2
+    implementation("com.kakao.maps.open:android:2.12.15")
+
+    // Google Location Services
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

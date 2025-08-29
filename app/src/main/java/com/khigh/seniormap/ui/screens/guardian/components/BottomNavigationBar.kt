@@ -4,16 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.khigh.seniormap.R
 
 /**
  * 하단 네비게이션 바 컴포넌트
@@ -38,7 +38,9 @@ fun BottomNavigationBar(
             icon = { 
                 Icon(
                     imageVector = if (selectedTab == 0) Icons.Filled.Home else Icons.Outlined.Home,
-                    contentDescription = "홈"
+                    contentDescription = "홈",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
                 ) 
             },
             label = { 
@@ -63,8 +65,10 @@ fun BottomNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (selectedTab == 1) Icons.Filled.Search else Icons.Outlined.Search,
-                    contentDescription = "지도"
+                    imageVector = if (selectedTab == 1) ImageVector.vectorResource(R.drawable.ic_map_focused) else ImageVector.vectorResource(R.drawable.ic_map),
+                    contentDescription = "지도",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
                 ) 
             },
             label = { 
@@ -90,7 +94,9 @@ fun BottomNavigationBar(
             icon = { 
                 Icon(
                     imageVector = if (selectedTab == 2) Icons.Filled.List else Icons.Outlined.List,
-                    contentDescription = "설정"
+                    contentDescription = "설정",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
                 ) 
             },
             label = { 

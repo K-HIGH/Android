@@ -12,6 +12,20 @@ import com.khigh.seniormap.repository.UserRepository
 import com.khigh.seniormap.repository.UserRepositoryImpl
 import com.khigh.seniormap.repository.CaregiverRepository
 import com.khigh.seniormap.repository.CaregiverRepositoryImpl
+import com.khigh.seniormap.repository.RouteRepository
+import com.khigh.seniormap.repository.RouteRepositoryImpl
+import com.khigh.seniormap.repository.TrackRepository
+import com.khigh.seniormap.repository.TrackRepositoryImpl
+import com.khigh.seniormap.repository.FavoriteRepository
+import com.khigh.seniormap.repository.FavoriteRepositoryImpl
+import com.khigh.seniormap.repository.SafetyAreaRepository
+import com.khigh.seniormap.repository.SafetyAreaRepositoryImpl
+import com.khigh.seniormap.repository.CaretakerRepository
+import com.khigh.seniormap.repository.CaretakerRepositoryImpl
+import com.khigh.seniormap.repository.KakaoMapRepository
+import com.khigh.seniormap.repository.KakaoMapRepositoryImpl
+import com.khigh.seniormap.repository.LocationRepository
+import com.khigh.seniormap.repository.LocationRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -71,6 +85,69 @@ abstract class DataModule {
     abstract fun bindCaregiverRepository(
         caregiverRepositoryImpl: CaregiverRepositoryImpl
     ): CaregiverRepository
+    
+    /**
+     * RouteRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindRouteRepository(
+        routeRepositoryImpl: RouteRepositoryImpl
+    ): RouteRepository
+    
+    /**
+     * TrackRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindTrackRepository(
+        trackRepositoryImpl: TrackRepositoryImpl
+    ): TrackRepository
+    
+    /**
+     * FavoriteRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindFavoriteRepository(
+        favoriteRepositoryImpl: FavoriteRepositoryImpl
+    ): FavoriteRepository
+    
+    /**
+     * SafetyAreaRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindSafetyAreaRepository(
+        safetyAreaRepositoryImpl: SafetyAreaRepositoryImpl
+    ): SafetyAreaRepository
+    
+    /**
+     * CaretakerRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCaretakerRepository(
+        caretakerRepositoryImpl: CaretakerRepositoryImpl
+    ): CaretakerRepository
+    
+    /**
+     * KakaoMapRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindKakaoMapRepository(
+        kakaoMapRepositoryImpl: KakaoMapRepositoryImpl
+    ): KakaoMapRepository
+
+    /**
+     * LocationRepository 구현체 바인딩
+     */
+    @Binds
+    @Singleton
+    abstract fun bindLocationRepository(
+        locationRepositoryImpl: LocationRepositoryImpl
+    ): LocationRepository
 
     companion object {
         
@@ -85,4 +162,6 @@ abstract class DataModule {
             return context.dataStore
         }
     }
+
+    
 } 

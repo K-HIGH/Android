@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import io.github.jan.supabase.auth.status.SessionStatus
 
@@ -35,7 +34,7 @@ import io.github.jan.supabase.auth.status.SessionStatus
 fun HomeScreen(
     onNavigateToLogin: () -> Unit = {},
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel
 ) {
     Log.d("com.khigh.seniormap", "[HomeScreen] onNavigateToLogin: $onNavigateToLogin")
     

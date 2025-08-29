@@ -4,9 +4,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.ActivityCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -16,11 +18,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
+import com.kakao.vectormap.KakaoMapSdk
+import com.khigh.seniormap.BuildConfig
 import com.khigh.seniormap.ui.composables.navigation.AppNavigation
 import com.khigh.seniormap.ui.theme.SeniorMapTheme
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import com.khigh.seniormap.viewmodel.UserViewModel
 import com.khigh.seniormap.viewmodel.CaregiverViewModel
+import com.khigh.seniormap.viewmodel.LocationViewModel
+import com.khigh.seniormap.viewmodel.RouteViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.auth
@@ -45,11 +51,16 @@ class MainActivity : ComponentActivity() {
     
     // AuthViewModel 참조를 저장하기 위한 변수
     private var authViewModelRef: AuthViewModel? = null
+
+    val REQUEST_LOCATION_PERMISSION = 1000
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        requestLocationPermission()
         
+        Log.d("com.khigh.seniormap.ui.MainActivity", "KAKAO_NATIVE_APP_KEY: ${BuildConfig.KAKAO_NATIVE_APP_KEY}")
+        KakaoMapSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
         setContent {
             SeniorMapTheme {
                 Surface(
@@ -139,12 +150,30 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    fun requestLocationPermission() {
+        Log.d("com.khigh.seniormap", "[MainActivity] requestLocationPermission")
+        if (ActivityCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                REQUEST_LOCATION_PERMISSION
+            )
+        }
+    }
     
     @Composable
     private fun MainContent() {
         val authViewModel: AuthViewModel = hiltViewModel()
         val userViewModel: UserViewModel = hiltViewModel()
-        val caregiverViewModel: CaregiverViewModel = hiltViewModel()
+
         // ViewModel 준비 상태 확인 및 참조 저장
         val isViewModelReady by authViewModel.isReady.collectAsState()
         
@@ -168,6 +197,8 @@ class MainActivity : ComponentActivity() {
         // 인증 관련 상태 관찰
         val authState by authViewModel.authState.collectAsState()
         val isSigningIn by authViewModel.isSigningIn.collectAsState()
+        val isLoading by authViewModel.isLoading.collectAsState()
+        val isUserRegistered by authViewModel.isUserRegistered.collectAsState()
         val errorMessage by authViewModel.errorMessage.collectAsState()
         
         Scaffold(
@@ -176,10 +207,11 @@ class MainActivity : ComponentActivity() {
             AppNavigation(
                 authViewModel = authViewModel,
                 userViewModel = userViewModel,
-                caregiverViewModel = caregiverViewModel,
                 modifier = Modifier.padding(innerPadding),
                 isAuthenticated = authState != SessionStatus.NotAuthenticated(),
                 isSigningIn = isSigningIn,
+                isLoading = isLoading,
+                isUserRegistered = isUserRegistered,
                 errorMessage = errorMessage,
                 onClearError = { authViewModel.clearErrorMessage() }
             )

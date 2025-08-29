@@ -17,8 +17,14 @@ import com.khigh.seniormap.ui.screens.guardian.GuardianHomeScreen
 import com.khigh.seniormap.ui.screens.RoleSelectionScreen
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.khigh.seniormap.viewmodel.LocationViewModel
+import com.khigh.seniormap.viewmodel.RouteViewModel
 import com.khigh.seniormap.viewmodel.UserViewModel
 import com.khigh.seniormap.viewmodel.CaregiverViewModel
+import com.khigh.seniormap.ui.screens.senior.SeniorHomeScreen
+import com.khigh.seniormap.ui.screens.senior.LocationSearchScreen
+import com.khigh.seniormap.ui.screens.senior.FavoriteEditScreen
+import com.khigh.seniormap.ui.screens.senior.RouteSearchScreen
 
 
 /**
@@ -41,16 +47,19 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     userViewModel: UserViewModel,
     caregiverViewModel: CaregiverViewModel = hiltViewModel(),
+    locationViewModel: LocationViewModel = hiltViewModel(),
+    routeViewModel: RouteViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     isAuthenticated: Boolean = false,
     isSigningIn: Boolean = false,
+    isLoading: Boolean = false,
+    isUserRegistered: Boolean = false,
     errorMessage: String? = null,
     onClearError: () -> Unit = {}
 ) {
     val navController = rememberNavController()
 
     val authState by authViewModel.authState.collectAsState()
-    val isUserRegistered by authViewModel.isUserRegistered.collectAsState()
     val isCaregiver by userViewModel.isCaregiver.collectAsState()
     val isHelper by userViewModel.isHelper.collectAsState()
     
@@ -64,11 +73,10 @@ fun AppNavigation(
     
     // 네비게이션 상태 결정
     val startDestination = when {
-        isUserRegistered -> "role_selection"
         !isAuthenticated -> "login"
-        isAuthenticated && !isUserRegistered -> "role_selection"
-        isAuthenticated && isUserRegistered -> "guardian_home"
-        else -> "login"
+        isAuthenticated && !isLoading && !isUserRegistered -> "role_selection"
+        isAuthenticated && !isLoading && isUserRegistered -> "guardian_home" // TODO: 보호자 홈 화면으로 변경
+        else -> "loading"
     }
     
     Box(modifier = modifier.fillMaxSize()) {
@@ -76,16 +84,18 @@ fun AppNavigation(
         Log.d("com.khigh.seniormap", "[AppNavigation] isAuthenticated: $isAuthenticated, authState: $authState, isUserRegistered: $isUserRegistered")
         NavHost(
             navController = navController,
-            startDestination = startDestination
+            startDestination = "login"
+            // startDestination = startDestination
         ) {
             // 로그인 화면
             composable("login") {
                 LoginScreen(
                     onNavigateToLoading = {
                         navController.navigate("loading") {
-                            popUpTo("login") { inclusive = true }
+                            // popUpTo("login") { inclusive = true }
                         }
-                    }
+                    },
+                    authViewModel = authViewModel
                 )
             }
             composable("loading") {
@@ -99,7 +109,9 @@ fun AppNavigation(
                         navController.navigate("role_selection") {
                             popUpTo("loading") { inclusive = true }
                         }
-                    }
+                    },
+                    authViewModel = authViewModel,
+                    userViewModel = userViewModel
                 )
             }
             
@@ -114,7 +126,7 @@ fun AppNavigation(
                                 popUpTo("role_selection") { inclusive = true }
                             }
                         } else {
-                            navController.navigate("home") {
+                            navController.navigate("senior_home") {
                                 popUpTo("role_selection") { inclusive = true }
                             }
                         }
@@ -128,20 +140,64 @@ fun AppNavigation(
                 GuardianHomeScreen(
                     onNavigateToLogin = {
                         navController.navigate("login") {
-                            popUpTo("guardian_home") { inclusive = true }
+                            // popUpTo("guardian_home") { inclusive = true }
                         }
                     },
                     caregiverViewModel = caregiverViewModel
                 )
             }
             
-            // 기존 홈 화면 (필요시 유지)
-            composable("home") {
-                HomeScreen(
+            composable("senior_home") {
+                SeniorHomeScreen(
                     onNavigateToLogin = {
                         navController.navigate("login") {
-                            popUpTo("home") { inclusive = true }
+                            // popUpTo("senior_home") { inclusive = true }
                         }
+                    },
+                    onNavigateToLocationSearch = {
+                        navController.navigate("location_search") {
+                            // popUpTo("senior_home") { inclusive = true }
+                        }
+                    },
+                    onNavigateToFavoriteEdit = {
+                        navController.navigate("favorite_edit") {
+                            // popUpTo("senior_home") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable("location_search") {
+                LocationSearchScreen(
+                    onRouteSelected = {
+                        // 경로 검색 화면으로 이동하면서 출발지와 도착지 정보 전달
+                        navController.navigate("route_search") {
+                            // popUpTo("location_search") { inclusive = true }
+                        }
+                    },
+                    onBackClick = {
+                        navController.navigateUp()
+                    },
+                    locationViewModel = locationViewModel,
+                    routeViewModel = routeViewModel
+                )
+            }
+
+            composable("route_search") {
+                RouteSearchScreen(
+                    onBackClick = {
+                        navController.navigate("location_search") {
+                            // popUpTo("location_search") { inclusive = true }
+                        }
+                    },
+                    routeViewModel = routeViewModel
+                )
+            }
+
+            composable("favorite_edit") {
+                FavoriteEditScreen(
+                    onBackClick = {
+                        navController.navigateUp()
                     }
                 )
             }

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.khigh.seniormap.ui.screens.guardian.components.*
+import com.khigh.seniormap.ui.screens.guardian.GuardianMapScreen
 import com.khigh.seniormap.viewmodel.CaregiverViewModel
 import android.util.Log
 import com.khigh.seniormap.model.dto.caregiver.*
@@ -30,34 +31,34 @@ fun GuardianHomeScreen(
     caregiverViewModel: CaregiverViewModel
 ) {
     // 임시 데이터 - 실제로는 ViewModel에서 가져올 데이터
-    // val guardians = remember {
-    //     listOf(
-    //         GuardianData(
-    //             id = "1",
-    //             name = "김할자",
-    //             location = "집",
-    //             isAtHome = true
-    //         ),
-    //         GuardianData(
-    //             id = "2", 
-    //             name = "송진호",
-    //             location = "마을",
-    //             isAtHome = false
-    //         ),
-    //         GuardianData(
-    //             id = "3",
-    //             name = "나문희", 
-    //             location = "집",
-    //             isAtHome = true
-    //         ),
-    //         GuardianData(
-    //             id = "4",
-    //             name = "최불암",
-    //             location = "마을",
-    //             isAtHome = false
-    //         )
-    //     )
-    // }
+    val guardians = remember {
+        listOf(
+            GuardianData(
+                userId = "1",
+                userName = "김할자",
+                location = "집",
+                isAtHome = true
+            ),
+            GuardianData(
+                userId = "2", 
+                userName = "송진호",
+                location = "외출",
+                isAtHome = false
+            ),
+            GuardianData(
+                userId = "3",
+                userName = "나문희", 
+                location = "집",
+                isAtHome = true
+            ),
+            GuardianData(
+                userId = "4",
+                userName = "최불암",
+                location = "외출",
+                isAtHome = false
+            )
+        )
+    }
     
     // 현재 선택된 하단 네비게이션 탭
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -99,7 +100,8 @@ fun GuardianHomeScreen(
                 0 -> {
                     // 홈 탭 - 피보호인 목록
                     GuardianList(
-                        guardians = caregivers.map { it.toGuardianData() },
+                        // guardians = caregivers.map { it.toGuardianData() },
+                        guardians = guardians,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(top = 8.dp)
@@ -111,19 +113,12 @@ fun GuardianHomeScreen(
                     )
                 }
                 1 -> {
-                    // 지도 탭 - 지도 화면 (임시)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        Text(
-                            text = "지도 화면 (구현 예정)",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    // 지도 탭 - 지도 화면
+                    GuardianMapScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackClick = { selectedTab = 0 }, // 홈 탭으로 돌아가기
+                        caregiverViewModel = caregiverViewModel
+                    )
                 }
                 2 -> {
                     // 설정 탭 - 설정 화면 (임시)

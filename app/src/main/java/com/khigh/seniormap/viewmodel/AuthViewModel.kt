@@ -35,6 +35,9 @@ class AuthViewModel @Inject constructor(
     private val _signingIn = MutableStateFlow(false)
     val isSigningIn: StateFlow<Boolean> = _signingIn.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _signingOut = MutableStateFlow(false)
     val isSigningOut: StateFlow<Boolean> = _signingOut.asStateFlow()
 
@@ -121,6 +124,7 @@ class AuthViewModel @Inject constructor(
      */
     fun loginWithOAuth(provider: OAuthProvider) {
         viewModelScope.launch {
+            _isLoading.value = true
             _signingIn.value = true
             _errorMessage.value = null
             
@@ -132,12 +136,14 @@ class AuthViewModel @Inject constructor(
                     _errorMessage.value = error.message ?: "OAuth 로그인에 실패했습니다."
                     _signingIn.value = false
                 }
+            _isLoading.value = false
         }
     }
 
     fun handleCallback(intent: Intent) {
         viewModelScope.launch {
             Log.d(_tag, "handleCallback start: _signingIn.value: ${_signingIn.value}")
+            _isLoading.value = true
             _signingIn.value = true
             supabaseAuthRepository.handleCallback(intent)
                 .onSuccess {
@@ -175,25 +181,27 @@ class AuthViewModel @Inject constructor(
                         _isUserRegistered.value = user.user.isRegistered
                     }
 
-                    _signingIn.value = false
                     Log.d(_tag, "handleCallback:login: _signingIn: ${_signingIn.value}")
+                    _isLoading.value = false
                 }
                 .onFailure { error ->
                     _errorMessage.value = error.message ?: "OAuth 딥링크 처리에 실패했습니다."
                     Log.e(_tag, "handleCallback:login: ${error.message}")
                     Log.e(_tag, "handleCallback:login: ${error.cause}")
+                    _isLoading.value = false
                     _signingIn.value = false
                 }
             } else {
                 _errorMessage.value = "액세스 토큰을 찾을 수 없습니다."
                 _signingIn.value = false
+                _isLoading.value = false
             }
         }
     }
 
-    // fun onAuthResultHandled() {
-    //     _signingIn.value = false
-    // }
+    fun onAuthResultHandled() {
+        _signingIn.value = false
+    }
 
     
     /**
@@ -227,6 +235,7 @@ class AuthViewModel @Inject constructor(
      */
     fun refreshSession() {
         viewModelScope.launch {
+            _isLoading.value = true
             supabaseAuthRepository.refreshSession()
                 .onSuccess { user ->
                     Log.d(_tag, "refreshSession: user: ${user}")
@@ -248,6 +257,7 @@ class AuthViewModel @Inject constructor(
                     // 세션 갱신 실패 시 로그아웃 처리
                     logout()
                 }
+            _isLoading.value = false
         }
     }
     

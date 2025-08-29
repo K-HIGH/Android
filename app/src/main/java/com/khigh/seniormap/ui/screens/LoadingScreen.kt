@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.khigh.seniormap.viewmodel.AuthViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.khigh.seniormap.model.entity.UserEntity
 import com.khigh.seniormap.viewmodel.UserViewModel
 
@@ -31,8 +30,8 @@ fun LoadingScreen(
     onNavigateToRoleSelection: () -> Unit = {},
     modifier: Modifier = Modifier,
     message: String = "로딩 중...",
-    authViewModel: AuthViewModel = hiltViewModel(),
-    userViewModel: UserViewModel = hiltViewModel()
+    authViewModel: AuthViewModel,
+    userViewModel: UserViewModel
 ) {
 
     val _tag = "com.khigh.seniormap.LoadingScreen"
@@ -40,22 +39,25 @@ fun LoadingScreen(
 
     val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
     val isSigningIn by authViewModel.isSigningIn.collectAsStateWithLifecycle()
+    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
     val isUserRegistered by authViewModel.isUserRegistered.collectAsStateWithLifecycle()
 
-    LaunchedEffect(isSigningIn, isUserRegistered) {
-        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, isUserRegistered: $isUserRegistered")
+    LaunchedEffect(isSigningIn, isUserRegistered, isLoading, Unit) {
+        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, isLoading: $isLoading, isUserRegistered: $isUserRegistered")
         
         // 로그인 진행 중이 아닐 때만 네비게이션 처리
-        if (!isSigningIn) {
+        if (!isSigningIn && !isLoading) {
             when (isUserRegistered) {
                 // 역할 선택이 필요하지 않은 경우 (기존 사용자)
                 true -> {
                     Log.d(_tag, "[LaunchedEffect] No need role selection, navigating to home")
+                    authViewModel.onAuthResultHandled()
                     onNavigateToGuardianHome()
                 }
                 // 역할 선택이 필요한 경우 (신규 사용자)
                 false -> {
                     Log.d(_tag, "[LaunchedEffect] role selection, navigating to role selection")
+                    authViewModel.onAuthResultHandled()
                     onNavigateToRoleSelection()
                 }
             }

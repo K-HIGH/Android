@@ -13,6 +13,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SeniorMap"
         android:networkSecurityConfig="@xml/network_security_config">
+        <!-- 카카오맵 v2 SDK 메타데이터 -->
+        <meta-data
+            android:name="com.kakao.vectormap.API_KEY"
+            android:value="${KAKAO_NATIVE_APP_KEY}" />
+            
         <activity
             android:name=".ui.activities.MainActivity"
             android:exported="true"
@@ -36,4 +41,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 </manifest>

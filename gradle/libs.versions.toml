@@ -39,6 +39,7 @@ datastore = "1.1.1"
 # Supabase
 supabase-bom = "3.2.2"
 ktor = "3.2.2"
+playServicesTasks = "18.3.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -97,6 +98,7 @@ ktor-client-core    = { module = "io.ktor:ktor-client-core", version.ref = "ktor
 ktor-utils          = { module = "io.ktor:ktor-utils", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version.ref = "playServicesTasks" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

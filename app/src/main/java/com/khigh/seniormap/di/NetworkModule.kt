@@ -6,12 +6,20 @@ import com.khigh.seniormap.network.api.SupabaseAuthApi
 import com.khigh.seniormap.network.api.AuthApi
 import com.khigh.seniormap.network.api.UserApi
 import com.khigh.seniormap.network.api.CaregiverApi
+import com.khigh.seniormap.network.api.RouteApi
+import com.khigh.seniormap.network.api.TrackApi
+import com.khigh.seniormap.network.api.FavoriteApi
+import com.khigh.seniormap.network.api.SafetyAreaApi
+import com.khigh.seniormap.network.api.CaretakerApi
+import com.khigh.seniormap.network.api.KakaoMapApi
+import com.khigh.seniormap.network.api.LocationApi
 import com.khigh.seniormap.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -38,8 +46,12 @@ object NetworkModule {
     annotation class SupabaseRetrofit
     
     @Qualifier
-    @Retention(AnnotationRetention.BINARY)
-    annotation class ServerRetrofit
+@Retention(AnnotationRetention.BINARY)
+annotation class ServerRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class KakaoMapRetrofit
     
     // ==================== Common Dependencies ====================
     
@@ -153,5 +165,88 @@ object NetworkModule {
     @Singleton
     fun provideCaregiverApi(@ServerRetrofit retrofit: Retrofit): CaregiverApi {
         return retrofit.create(CaregiverApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideRouteApi(@ServerRetrofit retrofit: Retrofit): RouteApi {
+        return retrofit.create(RouteApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideTrackApi(@ServerRetrofit retrofit: Retrofit): TrackApi {
+        return retrofit.create(TrackApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideFavoriteApi(@ServerRetrofit retrofit: Retrofit): FavoriteApi {
+        return retrofit.create(FavoriteApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSafetyAreaApi(@ServerRetrofit retrofit: Retrofit): SafetyAreaApi {
+        return retrofit.create(SafetyAreaApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCaretakerApi(@ServerRetrofit retrofit: Retrofit): CaretakerApi {
+        return retrofit.create(CaretakerApi::class.java)
+    }
+    
+    // ==================== Kakao Map API Dependencies ====================
+    
+    @Provides
+    @Singleton
+    @KakaoMapRetrofit
+    fun provideKakaoMapRetrofit(
+        json: Json
+    ): Retrofit {
+        val contentType = "application/json".toMediaType()
+        
+        // Kakao Map API용 별도 OkHttpClient
+        val kakaoMapClient = OkHttpClient.Builder()
+            .addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = if (BuildConfig.DEBUG) {
+                        HttpLoggingInterceptor.Level.BODY
+                    } else {
+                        HttpLoggingInterceptor.Level.NONE
+                    }
+                }
+            )
+            .addInterceptor(
+                Interceptor { chain ->
+                    val newRequest = chain.request().newBuilder()
+                        .header("Authorization", "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}")
+                        .build()
+                    return@Interceptor chain.proceed(newRequest)
+                }
+            )
+            .connectTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(AppConstants.Api.TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
+        
+        return Retrofit.Builder()
+            .baseUrl("https://dapi.kakao.com/") // Kakao Map API URL
+            .client(kakaoMapClient)
+            .addConverterFactory(json.asConverterFactory(contentType))
+            .build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideKakaoMapApi(@KakaoMapRetrofit retrofit: Retrofit): KakaoMapApi {
+        return retrofit.create(KakaoMapApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideLocationApi(@KakaoMapRetrofit retrofit: Retrofit): LocationApi {
+        return retrofit.create(LocationApi::class.java)
     }
 } 

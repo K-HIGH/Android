@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.khigh.seniormap.viewmodel.AuthViewModel
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.Kakao
@@ -37,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun LoginScreen(
     onNavigateToLoading: () -> Unit = {},
     modifier: Modifier = Modifier,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel
 ) {
     val _tag = "com.khigh.seniormap.LoginScreen"
     Log.d(_tag, "onNavigateToLoading: $onNavigateToLoading")
@@ -45,24 +44,27 @@ fun LoginScreen(
     val context = LocalContext.current
     val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
     val isSigningIn by authViewModel.isSigningIn.collectAsStateWithLifecycle()
+    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
     val isUserRegistered by authViewModel.isUserRegistered.collectAsStateWithLifecycle()
     val errorMessage by authViewModel.errorMessage.collectAsStateWithLifecycle()
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
     
     // 인증 성공 시 네비게이션 처리
-    LaunchedEffect(authState, isSigningIn) {
-        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, authState: $authState")
+    LaunchedEffect(authState, isSigningIn, isLoading, Unit) {
+        Log.d(_tag, "[LaunchedEffect] isSigningIn: $isSigningIn, isLoading: $isLoading, authState: $authState")
         
         // 로그인 진행 중이 아닐 때만 네비게이션 처리
-        if (isSigningIn) {
+        if (isSigningIn && !isLoading) {
             when {
                 // 인증 완료된 기존 사용자
                 authState is SessionStatus.Authenticated -> {
                     Log.d(_tag, "[LaunchedEffect] Login complete, navigating to loading")
+                    authViewModel.onAuthResultHandled()
                     onNavigateToLoading()
                 }
                 else -> {
                     Log.d(_tag, "[LaunchedEffect] Authentication state: $authState")
+                    authViewModel.onAuthResultHandled()
                 }
             }
         }
